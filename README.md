@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Spark Bytes 🍕⚡
 
 A platform for Boston University students and faculty members to post events that provide food or snacks. The aim is to reduce food waste resulting from over-purchasing for events and at the same time, help students access free food.
@@ -5,7 +6,7 @@ A platform for Boston University students and faculty members to post events tha
 ## Features
 
 - 🔐 Secure login/signup with BU email validation
-- 👥 Support for students, faculty, and staff
+- 👥 Support for students and event organizers
 - 🍔 Post and discover food events on campus
 - ♻️ Help reduce food waste at BU
 - 📱 Modern, responsive design
@@ -92,17 +93,17 @@ CS391-Group9-Spark-Bytes-Project-main/
 ## Current Features
 
 ### Login Page
-- Professional design with BU colors (red and white)
+- Professional split-screen design with BU colors (red gradient and white)
 - Toggle between login and signup modes
 - BU email validation (@bu.edu)
-- User type selection (Student/Faculty/Staff)
+- User type selection (Student/Event Organizer)
 - Password strength requirements
 - Responsive design for mobile and desktop
 - Smooth animations and transitions
+- Supabase authentication integration
 
 ## Future Enhancements
 
-- Database integration (MongoDB)
 - Event posting and discovery
 - Real-time notifications
 - User profiles
@@ -119,3 +120,7 @@ MIT
 
 CS391 Group 9
 
+
+=======
+# CS391-Group9-Spark-Bytes-Project
+>>>>>>> 152ec868b4e1e9548140e5e91c8c3ef4b2cd5b93
