@@ -118,6 +118,11 @@ MIT
 ## Contributors
 
 CS391 Group 9
+Ilias Zaher 
+Zhihui Qian
+Merem Gabriel 
+Ivy Shi 
+Liting Zheng 
 
 
 =======
