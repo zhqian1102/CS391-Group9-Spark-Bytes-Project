@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import "./UserDashboard.css";
+import NavigationBar from "./NavigationBar";
+import Footer from "./Footer";
 
 const UserDashboard = () => {
   const { user, logout } = useAuth();
@@ -56,6 +58,8 @@ const UserDashboard = () => {
 
   return (
     <div className="userdashboard-container">
+      {/* Navigation Component */}
+      <NavigationBar />
       {/* Main Content */}
       <main className="userdashboard-main">
         <div className="welcome-section">
@@ -132,10 +136,8 @@ const UserDashboard = () => {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="footer">
-        <p>© 2025 Spark!Bytes. All rights reserved.</p>
-      </footer>
+      {/* Footer Component */}
+      <Footer />
     </div>
   );
 };
