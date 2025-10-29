@@ -1,14 +1,10 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const connectDB = require('./config/db');
 
 dotenv.config();
 
 const app = express();
-
-// Connect to MongoDB
-connectDB();
 
 // Middleware
 app.use(cors());
@@ -32,12 +28,8 @@ app.get('/', (req, res) => {
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  const mongoose = require('mongoose');
-  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
-  
   res.json({
     status: 'ok',
-    database: dbStatus,
     timestamp: new Date().toISOString()
   });
 });
