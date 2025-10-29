@@ -144,6 +144,7 @@
   font-weight: 600;
 }
 
+/* View Events button */
 .view-events-button {
   background: white;
   border: 2px solid #2c5258;
@@ -159,8 +160,6 @@
 .view-events-button:hover {
   background: #2c5258;
   color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(44, 82, 88, 0.3);
 }
 
 .view-events-button:active {
@@ -188,10 +187,10 @@
 }
 
 .event-card:hover {
-  transform: translateY(-5px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
+/* Image */
 .event-image-container {
   position: relative;
   height: 200px;
@@ -205,6 +204,7 @@
   object-fit: cover;
 }
 
+/* Spots left tag */
 .spots-left {
   position: absolute;
   top: 1rem;
@@ -217,6 +217,7 @@
   font-size: 0.9rem;
 }
 
+/* Event content */
 .event-content {
   padding: 1.5rem;
 }
@@ -284,6 +285,7 @@
   margin-top: 1.5rem;
 }
 
+/* View Details button */
 .view-details-button {
   flex: 1;
   background: transparent;
@@ -300,13 +302,13 @@
 .view-details-button:hover {
   background: #2c5258;
   color: white;
-  transform: translateY(-2px);
 }
 
 .view-details-button:active {
   transform: translateY(0);
 }
 
+/* Cancel reservation button */
 .cancel-button {
   flex: 1;
   background: #dc3545;
@@ -321,17 +323,10 @@
 }
 
 .cancel-button:hover {
-  transform: translateY(-2px);
+  background: white;
+  color: #2c5258;
 }
 
 .cancel-button:active {
   transform: translateY(0);
-}
-
-/* Footer */
-.footer {
-  color: grey;
-  text-align: center;
-  padding: 2rem;
-  margin-top: 3rem;
 }

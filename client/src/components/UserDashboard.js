@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "./UserDashboard.css";
+import EventDetailModal from "./EventDetailModal";
+import NavigationBar from "./NavigationBar";
+import Footer from "./Footer";
 
 const UserDashboard = () => {
   const navigate = useNavigate();
@@ -24,9 +27,18 @@ const UserDashboard = () => {
       date: "10/25/2025",
       time: "3pm - 4pm",
       spotsLeft: 3,
+      totalSpots: 20,
       image:
         "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&h=320&fit=crop",
       tags: ["Vegan", "Gluten-Free", "Kosher"],
+      dietaryTags: ["Vegan", "Gluten-Free", "Kosher"],
+      description: "Join us for our demo day with amazing food!", // ← OPTIONAL
+      pickupInstructions: "Pick up at the front desk", // ← OPTIONAL
+      foodItems: [
+        // ← OPTIONAL
+        { name: "Grilled Chicken", quantity: 50, unit: "pieces" },
+        { name: "Caesar Salad", quantity: 30, unit: "servings" },
+      ],
     },
     {
       id: 2,
@@ -35,9 +47,16 @@ const UserDashboard = () => {
       date: "10/24/2025",
       time: "6pm - 8pm",
       spotsLeft: 4,
+      totalSpots: 10,
       image:
         "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=320&fit=crop",
-      tags: ["Vegan", "Gluten-Free", "Kosher"],
+      tags: ["Vegan"],
+      dietaryTags: ["Vegan"],
+      description: "Join us for our demo day with amazing food!", // ← OPTIONAL
+      foodItems: [
+        // ← OPTIONAL
+        { name: "Grilled Chicken", quantity: 50, unit: "pieces" },
+      ],
     },
     {
       id: 3,
@@ -46,16 +65,29 @@ const UserDashboard = () => {
       date: "10/25/2025",
       time: "3pm - 4pm",
       spotsLeft: 5,
+      totalSpots: 5,
       image:
         "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=400&h=320&fit=crop",
       tags: ["Vegan", "Gluten-Free", "Kosher"],
+      pickupInstructions: "Pick up at the front desk", // ← OPTIONAL
     },
   ]);
 
-  const handleViewDetails = (eventId) => {
-    alert(`View details of event ${eventId} coming soon`);
+  // Modal state
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+
+  const handleViewDetails = (event) => {
+    setSelectedEvent(event);
+    setShowModal(true);
   };
 
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedEvent(null);
+  };
+
+  /* Cancel event state */
   const handleCancel = (eventId) => {
     if (window.confirm("Confirm cancellation?")) {
       alert(`Cancelled reservation for event ${eventId}`);
@@ -65,47 +97,8 @@ const UserDashboard = () => {
 
   return (
     <div className="userdashboard-container">
-      {/* Navigation Header */}
-      <header className="dashboard-navbar">
-        <div className="navbar-left">
-          <div className="logo-section">
-            <img src="/sparkbytes.png" alt="Spark Bytes" className="nav-logo" />
-            <h1 className="nav-title">Spark!Bytes</h1>
-          </div>
-        </div>
-
-        <div className="navbar-right">
-          <button 
-            className="nav-link-btn"
-            onClick={() => navigate('/events')}
-          >
-            Browse Events
-          </button>
-          <button 
-            className="nav-link-btn"
-            onClick={() => navigate('/userdashboard')}
-          >
-            My Dashboard
-          </button>
-          <button 
-            className="profile-btn" 
-            title={user?.name || 'User'}
-          >
-            {user?.name?.charAt(0).toUpperCase() || 'U'}
-          </button>
-          <button 
-            className="logout-btn"
-            onClick={() => {
-              logout();
-              navigate('/login');
-            }}
-            title="Logout"
-          >
-            🚪
-          </button>
-        </div>
-      </header>
-
+      {/* Navigation Component */}
+      <NavigationBar />
       {/* Main Content */}
       <main className="userdashboard-main">
         <div className="welcome-section">
@@ -118,28 +111,32 @@ const UserDashboard = () => {
         <section className="reserved-events-section">
           <div className="section-header">
             <h3>My Reserved Events</h3>
-            <button 
+            <button
               className="view-events-button"
-              onClick={() => navigate('/events')}
+              onClick={() => navigate("/events")}
             >
               View Events
             </button>
           </div>
 
+          {/* Event cards section */}
           <div className="events-grid">
             {reservedEvents.map((event) => (
               <div key={event.id} className="event-card">
+                {/* Image */}
                 <div className="event-image-container">
                   <img
                     src={event.image}
                     alt={event.title}
                     className="event-image"
                   />
+                  {/* Spots left tag */}
                   <span className="spots-left">
                     {event.spotsLeft} Spots Left
                   </span>
                 </div>
 
+                {/* Event content*/}
                 <div className="event-content">
                   <div className="event-header">
                     <h4 className="event-title">{event.title}</h4>
@@ -170,9 +167,16 @@ const UserDashboard = () => {
                   </div>
 
                   <div className="event-actions">
-                    <button className="view-details-button">
+                    {/* View details button */}
+                    <button
+                      className="view-details-button"
+                      onClick={() => {
+                        handleViewDetails(event);
+                      }}
+                    >
                       View Details
                     </button>
+                    {/* Cancel reservation button */}
                     <button
                       className="cancel-button"
                       onClick={() => handleCancel(event.id)}
@@ -187,10 +191,17 @@ const UserDashboard = () => {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="footer">
-        <p>© 2025 Spark!Bytes. All rights reserved.</p>
-      </footer>
+      {/* Footer Component */}
+      <Footer />
+
+      {/* Event Detail Modal */}
+      {showModal && selectedEvent && (
+        <EventDetailModal
+          event={selectedEvent}
+          open={showModal}
+          onClose={handleCloseModal}
+        />
+      )}
     </div>
   );
 };
