@@ -1,9 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "./UserDashboard.css";
 
 const UserDashboard = () => {
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
 
   // Utilized Claude AI to generate dummy data for testing;
   // replace with data from db later.
@@ -56,6 +65,47 @@ const UserDashboard = () => {
 
   return (
     <div className="userdashboard-container">
+      {/* Navigation Header */}
+      <header className="dashboard-navbar">
+        <div className="navbar-left">
+          <div className="logo-section">
+            <img src="/sparkbytes.png" alt="Spark Bytes" className="nav-logo" />
+            <h1 className="nav-title">Spark!Bytes</h1>
+          </div>
+        </div>
+
+        <div className="navbar-right">
+          <button 
+            className="nav-link-btn"
+            onClick={() => navigate('/events')}
+          >
+            Browse Events
+          </button>
+          <button 
+            className="nav-link-btn"
+            onClick={() => navigate('/userdashboard')}
+          >
+            My Dashboard
+          </button>
+          <button 
+            className="profile-btn" 
+            title={user?.name || 'User'}
+          >
+            {user?.name?.charAt(0).toUpperCase() || 'U'}
+          </button>
+          <button 
+            className="logout-btn"
+            onClick={() => {
+              logout();
+              navigate('/login');
+            }}
+            title="Logout"
+          >
+            🚪
+          </button>
+        </div>
+      </header>
+
       {/* Main Content */}
       <main className="userdashboard-main">
         <div className="welcome-section">
@@ -68,7 +118,12 @@ const UserDashboard = () => {
         <section className="reserved-events-section">
           <div className="section-header">
             <h3>My Reserved Events</h3>
-            <button className="view-events-button">View Events</button>
+            <button 
+              className="view-events-button"
+              onClick={() => navigate('/events')}
+            >
+              View Events
+            </button>
           </div>
 
           <div className="events-grid">

@@ -1,14 +1,23 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './EventsPage.css';
 
 const EventsPage = () => {
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [events, setEvents] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState('');
   const [dietaryFilter, setDietaryFilter] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
 
   // Mock events data - you can replace with Supabase later
   useEffect(() => {
@@ -75,11 +84,23 @@ const EventsPage = () => {
         <div className="navbar-right">
           <a href="#events" className="nav-link">Events</a>
           <a href="#about" className="nav-link">About</a>
-          <button className="profile-btn" title={user?.name || 'User'}>
+          <button 
+            className="profile-btn" 
+            title={user?.name || 'User'}
+            onClick={() => navigate('/userdashboard')}
+          >
             {user?.name?.charAt(0).toUpperCase() || 'P'}
           </button>
-          
-         
+          <button 
+            className="logout-btn"
+            onClick={() => {
+              logout();
+              navigate('/login');
+            }}
+            title="Logout"
+          >
+            🚪
+          </button>
         </div>
       </header>
 

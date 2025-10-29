@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Login.css';
 
 const Login = () => {
+  const navigate = useNavigate();
   const { login, register } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
@@ -61,9 +63,8 @@ const Login = () => {
         
         alert(welcomeMessage);
         
-        // You can redirect to dashboard here later
-        // For now, just log the user data
-        console.log('User logged in:', result.user);
+        // Redirect to events page after successful login/registration
+        navigate('/events');
       } else {
         setError(result.error);
       }
