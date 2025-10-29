@@ -28,11 +28,13 @@ A platform for Boston University students and faculty members to post events tha
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 cd CS391-Group9-Spark-Bytes-Project-main
 ```
 
 2. Install dependencies for both server and client:
+
 ```bash
 npm run install-all
 ```
@@ -40,11 +42,13 @@ npm run install-all
 ### Running the Application
 
 #### Quick Start (runs both server and client)
+
 ```bash
 npm run dev
 ```
 
 The application will be available at:
+
 - Client: http://localhost:3000
 - Server: http://localhost:5001
 
@@ -56,6 +60,7 @@ For persistent user authentication, follow the detailed guide:
 📖 **[SUPABASE-SETUP.md](./SUPABASE-SETUP.md)**
 
 Quick version:
+
 1. Create account at https://supabase.com
 2. Create a new project
 3. Copy your Project URL and anon key
@@ -92,6 +97,7 @@ CS391-Group9-Spark-Bytes-Project-main/
 ## Current Features
 
 ### Login Page
+
 - Professional split-screen design with BU colors (red gradient and white)
 - Toggle between login and signup modes
 - BU email validation (@bu.edu)
@@ -100,6 +106,23 @@ CS391-Group9-Spark-Bytes-Project-main/
 - Responsive design for mobile and desktop
 - Smooth animations and transitions
 - Supabase authentication integration
+
+### User Dashboard Page
+
+- Personalized welcome message with user name
+- Grid display of reserved events
+- Event cards showing title, location, date, time, dietary tags and spots left
+- "View Details" button opens event detail modal
+- "Cancel" button cancels reservations
+- "View Events" button to browse all events
+
+### Navigation Bar Component
+
+- Reusable header component
+- Logo, search bar, navigation link and profile dropdown
+- Profile dropdown with alerts toggle and logout functionality
+- Responsive design
+- BU colors (red gradient and white)
 
 ## Future Enhancements
 
@@ -118,13 +141,15 @@ MIT
 ## Contributors
 
 ## CS391 Group 9
-Ilias Zaher 
-Zhihui Qian
-Merem Gabriel 
-Ivy Shi 
-Liting Zheng 
 
+Ilias Zaher
+Zhihui Qian
+Merem Gabriel
+Ivy Shi
+Liting Zheng
 
 =======
+
 # CS391-Group9-Spark-Bytes-Project
->>>>>>> 152ec868b4e1e9548140e5e91c8c3ef4b2cd5b93
+
+> > > > > > > 152ec868b4e1e9548140e5e91c8c3ef4b2cd5b93
