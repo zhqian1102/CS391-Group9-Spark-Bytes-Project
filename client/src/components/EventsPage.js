@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import EventDetailModal from './EventDetailModal';
+import NavigationBar from './NavigationBar';
+import Footer from './Footer';
 import './EventsPage.css';
 
 const EventsPage = () => {
@@ -90,49 +92,13 @@ const EventsPage = () => {
 
   return (
     <div className="events-page-container">
-      {/* Navigation Header */}
-      <header className="events-navbar">
-        <div className="navbar-left">
-          <div className="logo-section">
-            <img src="/sparkbytes.png" alt="Spark Bytes" className="nav-logo" />
-            <h1 className="nav-title">Spark!Bytes</h1>
-          </div>
-        </div>
+      {/* Use NavigationBar Component */}
+      <NavigationBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
 
-        <div className="navbar-center">
-          <div className="search-bar">
-            <span className="search-icon">🔍</span>
-            <input
-              type="text"
-              placeholder="Search for event, food or location"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className="navbar-right">
-          <a href="#events" className="nav-link">Events</a>
-          <a href="#about" className="nav-link">About</a>
-          <button 
-            className="profile-btn" 
-            title={user?.name || 'User'}
-            onClick={() => navigate('/userdashboard')}
-          >
-            {user?.name?.charAt(0).toUpperCase() || 'P'}
-          </button>
-          <button 
-            className="logout-btn"
-            onClick={() => {
-              logout();
-              navigate('/login');
-            }}
-            title="Logout"
-          >
-            🚪
-          </button>
-        </div>
-      </header>
+      {/* User Role Banner */}
+      <div className="user-banner">
+        <span>home - {user?.userType || 'event organizer'}</span>
+      </div>
 
       {/* User Role Banner */}
       <div className="user-banner">
@@ -279,10 +245,8 @@ const EventsPage = () => {
         onReserve={handleReserve}
       />
 
-      {/* Footer */}
-      <footer className="events-footer">
-        <p>© 2025 Spark!Bytes. All rights reserved.</p>
-      </footer>
+      {/* Use Footer Component */}
+      <Footer />
     </div>
   );
 };
