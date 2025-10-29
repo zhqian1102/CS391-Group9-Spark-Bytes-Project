@@ -149,6 +149,8 @@ Ivy Shi
 Liting Zheng
 
 =======
+## Figma Design
+https://www.figma.com/design/II4Fde0YNereD6PHAr4e4W/First-Draft?node-id=0-1&t=qFtx8SNI9xJzuD6v-1
 
 # CS391-Group9-Spark-Bytes-Project
 
