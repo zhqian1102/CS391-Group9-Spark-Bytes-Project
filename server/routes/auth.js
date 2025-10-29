@@ -4,6 +4,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const supabase = require('../config/supabase');
 
+
+
 // Temporary in-memory storage (used only when Supabase is not connected)
 const users = [];
 
