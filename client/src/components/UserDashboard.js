@@ -5,7 +5,8 @@ import "./UserDashboard.css";
 const UserDashboard = () => {
   const { user, logout } = useAuth();
 
-  // Sample event data - later this will come from a database
+  // Utilized Claude AI to generate dummy data for testing;
+  // replace with data from db later.
   const [reservedEvents] = useState([
     {
       id: 1,
@@ -43,19 +44,18 @@ const UserDashboard = () => {
   ]);
 
   const handleViewDetails = (eventId) => {
-    alert(`View details for event ${eventId} - Coming soon!`);
+    alert(`View details of event ${eventId} coming soon`);
   };
 
   const handleCancel = (eventId) => {
-    if (window.confirm("Are you sure you want to cancel this reservation?")) {
+    if (window.confirm("Confirm cancellation?")) {
       alert(`Cancelled reservation for event ${eventId}`);
-      // Later: Remove from reservedEvents
+      // Later: remove cancelled event from reservedEvents
     }
   };
 
   return (
     <div className="userdashboard-container">
-
       {/* Main Content */}
       <main className="userdashboard-main">
         <div className="welcome-section">
@@ -80,7 +80,7 @@ const UserDashboard = () => {
                     alt={event.title}
                     className="event-image"
                   />
-                  <span className="spots-badge">
+                  <span className="spots-left">
                     {event.spotsLeft} Spots Left
                   </span>
                 </div>
@@ -115,9 +115,7 @@ const UserDashboard = () => {
                   </div>
 
                   <div className="event-actions">
-                    <button
-                      className="view-details-button"
-                    >
+                    <button className="view-details-button">
                       View Details
                     </button>
                     <button
@@ -135,7 +133,7 @@ const UserDashboard = () => {
       </main>
 
       {/* Footer */}
-      <footer className="userdashboard-footer">
+      <footer className="footer">
         <p>© 2025 Spark!Bytes. All rights reserved.</p>
       </footer>
     </div>
