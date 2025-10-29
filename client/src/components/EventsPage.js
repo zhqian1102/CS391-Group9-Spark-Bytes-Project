@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import EventDetailModal from './EventDetailModal';
 import './EventsPage.css';
 
 const EventsPage = () => {
@@ -9,8 +10,10 @@ const EventsPage = () => {
   const [dateFilter, setDateFilter] = useState('');
   const [dietaryFilter, setDietaryFilter] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Mock events data - you can replace with Supabase later
+  // Mock events data
   useEffect(() => {
     const mockEvents = [
       {
@@ -21,11 +24,19 @@ const EventsPage = () => {
         time: '3pm - 4pm',
         food: ['Cheese Pizza', 'Pepperoni Pizza', 'Cookies'],
         spotsLeft: 8,
-        image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400',
+        totalSpots: 15,
+        image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&h=400&fit=crop',
         dietary: ['Vegan', 'Gluten-Free', 'Kosher'],
-        organizer: 'CS Department'
+        dietaryTags: ['Vegan', 'Halal', 'Kosher'],
+        organizer: 'CS Department',
+        description: 'Join us for the exciting Spark! Demo Day where students showcase their innovative projects and ideas. Great food and networking opportunities!',
+        pickupInstructions: 'Please arrive 10 minutes before the event time. Food will be served at the registration desk on the second floor.',
+        foodItems: [
+          { name: 'Cheese pizza', quantity: 8, unit: 'slices' },
+          { name: 'Classic pepperoni pizza', quantity: 12, unit: 'slices' },
+          { name: 'Chocolate chip cookies', quantity: 20, unit: 'pieces' }
+        ]
       },
-      
     ];
     setEvents(mockEvents);
   }, []);
@@ -35,6 +46,25 @@ const EventsPage = () => {
     setDietaryFilter('');
     setLocationFilter('');
     setSearchQuery('');
+  };
+
+  // Open modal
+  const handleViewDetail = (event) => {
+    setSelectedEvent(event);
+    setIsModalOpen(true);
+  };
+
+  // Close modal
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedEvent(null);
+  };
+
+  // Reserve food
+  const handleReserve = (eventId) => {
+    console.log('Reserved event:', eventId);
+    alert('Reservation confirmed!');
+    handleCloseModal();
   };
 
   const filteredEvents = events.filter(event => {
@@ -78,8 +108,6 @@ const EventsPage = () => {
           <button className="profile-btn" title={user?.name || 'User'}>
             {user?.name?.charAt(0).toUpperCase() || 'P'}
           </button>
-          
-         
         </div>
       </header>
 
@@ -206,7 +234,12 @@ const EventsPage = () => {
                         <span key={tag} className="dietary-tag">{tag}</span>
                       ))}
                     </div>
-                    <button className="view-detail-btn">View Detail</button>
+                    <button 
+                      className="view-detail-btn"
+                      onClick={() => handleViewDetail(event)}
+                    >
+                      View Detail
+                    </button>
                   </div>
                 </div>
               </div>
@@ -214,6 +247,14 @@ const EventsPage = () => {
           )}
         </div>
       </main>
+
+      {/* Event Detail Modal */}
+      <EventDetailModal
+        event={selectedEvent}
+        open={isModalOpen}
+        onClose={handleCloseModal}
+        onReserve={handleReserve}
+      />
 
       {/* Footer */}
       <footer className="events-footer">
