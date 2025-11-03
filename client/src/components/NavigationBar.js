@@ -59,6 +59,15 @@ const NavigationBar = () => {
           About
         </a>
 
+        {/* Notification Bell */}
+        <button
+          className="icon-button notification-button"
+          onClick={() => window.location.href = '/notifications'}
+          title="Notifications"
+        >
+          <span>🔔</span>
+        </button>
+
         {/* Profile Dropdown */}
         <div className="profile-dropdown-container">
           <button
