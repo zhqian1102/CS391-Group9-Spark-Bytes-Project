@@ -1,10 +1,11 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
-import Login from "./components/Login";
-import EventsPage from "./components/EventsPage";
-import UserDashboard from "./components/UserDashboard";
+import Login from "./pages/LogIn/Login";
+import EventsPage from "./pages/Events/EventsPage";
+import UserDashboard from "./pages/Dashboard/UserDashboard";
 import "./App.css";
+import PostEvent from "./pages/PostEvent/PostEvent";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
             <Route path="/" element={<Login />} />
             <Route path="/login" element={<Login />} />
             <Route path="/events" element={<EventsPage />} />
+            <Route path="/post" element={<PostEvent />} />
             <Route path="/userdashboard" element={<UserDashboard />} />
           </Routes>
         </div>

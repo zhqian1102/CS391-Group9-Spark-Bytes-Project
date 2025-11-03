@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 import "./UserDashboard.css";
-import EventDetailModal from "./EventDetailModal";
-import NavigationBar from "./NavigationBar";
-import Footer from "./Footer";
+import EventDetailModal from "../../components/EventDetailModal";
+import NavigationBar from "../../components/NavigationBar";
+import Footer from "../../components/Footer";
 
 const UserDashboard = () => {
   const navigate = useNavigate();
@@ -13,7 +13,7 @@ const UserDashboard = () => {
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!user) {
-      navigate('/login');
+      navigate("/login");
     }
   }, [user, navigate]);
 
