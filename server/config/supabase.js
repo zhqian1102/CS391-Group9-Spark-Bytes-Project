@@ -1,16 +1,21 @@
-const { createClient } = require('@supabase/supabase-js');
+import { createClient } from "@supabase/supabase-js";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-let supabase = null;
-
-if (supabaseUrl && supabaseAnonKey && supabaseUrl !== 'your-supabase-url-here') {
-  supabase = createClient(supabaseUrl, supabaseAnonKey);
-  console.log('✅ Supabase client initialized');
-} else {
-  console.log('⚠️  Supabase credentials not configured. Please update .env file.');
-  console.log('⚠️  Get your credentials from: https://app.supabase.com/project/_/settings/api');
+if (!supabaseUrl || !supabaseServiceRoleKey) {
+  console.warn(" Supabase credentials not configured.");
+  console.warn(
+    " Check your .env file for SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY"
+  );
 }
 
-module.exports = supabase;
+const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+
+// confirmation log
+console.log("Supabase client initialized with URL:", supabaseUrl);
+
+export default supabase;
