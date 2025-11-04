@@ -12,6 +12,9 @@ client/build/
 .env.test.local
 .env.production.local
 
+# User data storage
+server/data/
+
 # Logs
 npm-debug.log*
 yarn-debug.log*

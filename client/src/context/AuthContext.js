@@ -60,38 +60,33 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      if (!supabase) {
-        // Fallback to localStorage (for demo without Supabase)
-        const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-        const foundUser = storedUsers.find(u => u.email === email && u.password === password);
-        
-        if (foundUser) {
-          const userData = { ...foundUser };
-          delete userData.password;
-          setUser(userData);
-          localStorage.setItem('user', JSON.stringify(userData));
-          return { success: true, user: userData };
-        }
-        return { success: false, error: 'Invalid email or password' };
-      }
-
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
+      // Always use backend API for login to match our registration flow
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+      const response = await fetch(`${API_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (error) {
-        return { success: false, error: error.message };
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: data.message || 'Login failed' };
       }
 
+      // Set user data after successful login
       const userData = {
         id: data.user.id,
         email: data.user.email,
-        name: data.user.user_metadata?.name || data.user.email.split('@')[0],
-        userType: data.user.user_metadata?.userType || 'student'
+        name: data.user.name,
+        userType: data.user.userType
       };
 
       setUser(userData);
+      localStorage.setItem('user', JSON.stringify(userData));
+
       return { success: true, user: userData };
     } catch (error) {
       return {
@@ -103,67 +98,103 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (name, email, password, userType) => {
     try {
-      if (!supabase) {
-        // Fallback to localStorage (for demo without Supabase)
-        const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-        
-        // Check if user exists
-        if (storedUsers.find(u => u.email === email)) {
-          return { success: false, error: 'User already exists with this email' };
-        }
-
-        const newUser = {
-          id: Date.now().toString(),
-          name,
-          email,
-          password, // In real app, this would be hashed
-          userType,
-          createdAt: new Date().toISOString()
-        };
-
-        storedUsers.push(newUser);
-        localStorage.setItem('users', JSON.stringify(storedUsers));
-
-        const userData = { ...newUser };
-        delete userData.password;
-        setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
-        
-        return { success: true, user: userData };
-      }
-
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name,
-            userType
-          }
-        }
+      // Always use backend API for registration to ensure email verification
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+      const response = await fetch(`${API_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, password, userType }),
       });
 
-      if (error) {
-        return { success: false, error: error.message };
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: data.message || 'Registration failed' };
       }
 
-      const userData = {
-        id: data.user.id,
-        email: data.user.email,
-        name,
-        userType
-      };
-
-      setUser(userData);
+      // Return success, but don't set user yet - they need to verify
       return { 
         success: true, 
-        user: userData,
-        message: 'Please check your email to verify your account'
+        needsVerification: true,
+        message: 'Verification code sent to your email',
+        email: email
       };
     } catch (error) {
       return {
         success: false,
         error: error.message || 'Registration failed'
+      };
+    }
+  };
+
+  const verifyEmail = async (email, code) => {
+    try {
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+      const response = await fetch(`${API_URL}/api/auth/verify-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, code }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: data.message || 'Verification failed' };
+      }
+
+      // Set user data after successful verification
+      const userData = {
+        id: data.user.id,
+        email: data.user.email,
+        name: data.user.name,
+        userType: data.user.userType
+      };
+
+      setUser(userData);
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      return { 
+        success: true, 
+        user: userData,
+        message: 'Email verified successfully!'
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message || 'Verification failed'
+      };
+    }
+  };
+
+  const resendVerificationCode = async (email) => {
+    try {
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+      const response = await fetch(`${API_URL}/api/auth/resend-verification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: data.message || 'Failed to resend code' };
+      }
+
+      return { 
+        success: true, 
+        message: 'New verification code sent to your email'
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message || 'Failed to resend code'
       };
     }
   };
@@ -180,6 +211,8 @@ export const AuthProvider = ({ children }) => {
     user,
     login,
     register,
+    verifyEmail,
+    resendVerificationCode,
     logout,
     isAuthenticated: !!user
   };

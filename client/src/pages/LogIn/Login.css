@@ -199,6 +199,32 @@
   border-left: 4px solid #c00;
 }
 
+.verification-message {
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  margin-bottom: 20px;
+  border: 2px solid #4CAF50;
+}
+
+.verification-message p {
+  margin: 5px 0;
+  color: #2e7d32;
+  font-size: 14px;
+}
+
+.verification-message strong {
+  color: #1b5e20;
+  font-size: 16px;
+  display: block;
+  margin: 10px 0;
+}
+
+.resend-code {
+  text-align: center;
+}
+
 .submit-btn {
   padding: 16px;
   background: linear-gradient(135deg, #CC0000 0%, #8B0000 100%);

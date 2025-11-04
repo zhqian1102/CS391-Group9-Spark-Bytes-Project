@@ -5,13 +5,16 @@ import "./Login.css";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login, register } = useAuth();
+  const { login, register, verifyEmail, resendVerificationCode } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
+  const [showVerification, setShowVerification] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [pendingEmail, setPendingEmail] = useState("");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     name: "",
-    userType: "student",
+    userType: "student", // Default to student, no user selection needed
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -46,29 +49,34 @@ const Login = () => {
 
       if (isLogin) {
         result = await login(formData.email, formData.password);
+        
+        if (result.success) {
+          alert(`Login successful! Welcome back, ${result.user.name}!`);
+          navigate("/events");
+        } else {
+          setError(result.error);
+        }
       } else {
+        // Registration - send verification code
         result = await register(
           formData.name,
           formData.email,
           formData.password,
           formData.userType
         );
-      }
 
-      if (result.success) {
-        // Show success message
-        const welcomeMessage = result.message
-          ? result.message
-          : `${
-              isLogin ? "Login" : "Registration"
-            } successful! Welcome to Spark Bytes, ${result.user.name}!`;
-
-        alert(welcomeMessage);
-
-        // Redirect to events page after successful login/registration
-        navigate("/events");
-      } else {
-        setError(result.error);
+        if (result.success && result.needsVerification) {
+          // Show verification code input
+          setPendingEmail(formData.email);
+          setShowVerification(true);
+          alert(result.message);
+        } else if (result.success) {
+          // Direct success (Supabase flow)
+          alert(result.message || "Registration successful!");
+          navigate("/events");
+        } else {
+          setError(result.error);
+        }
       }
     } catch (err) {
       setError("An unexpected error occurred. Please try again.");
@@ -78,14 +86,64 @@ const Login = () => {
     }
   };
 
+  const handleVerification = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (verificationCode.length !== 6) {
+      setError("Please enter a valid 6-digit code");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const result = await verifyEmail(pendingEmail, verificationCode);
+
+      if (result.success) {
+        alert(`${result.message} Welcome to Spark Bytes, ${result.user.name}!`);
+        navigate("/events");
+      } else {
+        setError(result.error);
+      }
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.");
+      console.error("Verification error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const result = await resendVerificationCode(pendingEmail);
+
+      if (result.success) {
+        alert(result.message);
+      } else {
+        setError(result.error);
+      }
+    } catch (err) {
+      setError("Failed to resend code. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const toggleMode = () => {
     setIsLogin(!isLogin);
     setError("");
+    setShowVerification(false);
+    setVerificationCode("");
+    setPendingEmail("");
     setFormData({
       email: "",
       password: "",
       name: "",
-      userType: "student",
+      userType: "student", // Default to student, no user selection needed
     });
   };
 
@@ -130,7 +188,79 @@ const Login = () => {
             </button>
           </div>
 
-          <form className="login-form" onSubmit={handleSubmit}>
+          {showVerification ? (
+            // Verification Code Form
+            <form className="login-form" onSubmit={handleVerification}>
+              <div className="verification-message">
+                <p>📧 We've sent a verification code to:</p>
+                <strong>{pendingEmail}</strong>
+                <p style={{ marginTop: "10px", fontSize: "14px", color: "#666" }}>
+                  Please check your email and enter the 6-digit code below.
+                </p>
+              </div>
+              <div className="form-group">
+                <label htmlFor="verificationCode">Verification Code</label>
+                <input
+                  type="text"
+                  id="verificationCode"
+                  name="verificationCode"
+                  value={verificationCode}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                    setVerificationCode(value);
+                    setError("");
+                  }}
+                  placeholder="Enter 6-digit code"
+                  required
+                  maxLength="6"
+                  style={{ 
+                    fontSize: "24px", 
+                    letterSpacing: "10px", 
+                    textAlign: "center",
+                    fontWeight: "bold"
+                  }}
+                />
+              </div>
+              {error && <div className="error-message">{error}</div>}
+              <button type="submit" className="submit-btn" disabled={loading}>
+                {loading ? "Verifying..." : "Verify Email"}
+              </button>
+              <div className="resend-code">
+                <button
+                  type="button"
+                  onClick={handleResendCode}
+                  disabled={loading}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#4CAF50",
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                    marginTop: "10px"
+                  }}
+                >
+                  Didn't receive the code? Resend
+                </button>
+              </div>
+              <div style={{ marginTop: "15px", textAlign: "center" }}>
+                <button
+                  type="button"
+                  onClick={toggleMode}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#666",
+                    cursor: "pointer",
+                    fontSize: "14px"
+                  }}
+                >
+                  ← Back to Sign Up
+                </button>
+              </div>
+            </form>
+          ) : (
+            // Regular Login/Sign Up Form
+            <form className="login-form" onSubmit={handleSubmit}>
             {!isLogin && (
               <div className="form-group">
                 <label htmlFor="name">Full Name</label>
@@ -170,21 +300,6 @@ const Login = () => {
                 minLength="6"
               />
             </div>
-            {!isLogin && (
-              <div className="form-group">
-                <label htmlFor="userType">I am a</label>
-                <select
-                  id="userType"
-                  name="userType"
-                  value={formData.userType}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="student">Student</option>
-                  <option value="organizer">Event Organizer</option>
-                </select>
-              </div>
-            )}{" "}
             {error && <div className="error-message">{error}</div>}
             <button type="submit" className="submit-btn" disabled={loading}>
               {loading ? "Loading..." : isLogin ? "Login" : "Create Account"}
@@ -195,6 +310,7 @@ const Login = () => {
               </div>
             )}
           </form>
+          )}
 
           <div className="info-section">
             <div className="info-card">
