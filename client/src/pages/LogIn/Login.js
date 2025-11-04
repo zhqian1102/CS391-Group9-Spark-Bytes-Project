@@ -13,6 +13,7 @@ const Login = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
+    confirmPassword: "",
     name: "",
     userType: "student", // Default to student, no user selection needed
   });
@@ -39,6 +40,12 @@ const Login = () => {
     // Validate BU email
     if (!validateEmail(formData.email)) {
       setError("Please use your BU email address (@bu.edu)");
+      return;
+    }
+
+    // Validate password confirmation for signup
+    if (!isLogin && formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match. Please try again.");
       return;
     }
 
@@ -142,6 +149,7 @@ const Login = () => {
     setFormData({
       email: "",
       password: "",
+      confirmPassword: "",
       name: "",
       userType: "student", // Default to student, no user selection needed
     });
@@ -300,6 +308,21 @@ const Login = () => {
                 minLength="6"
               />
             </div>
+            {!isLogin && (
+              <div className="form-group">
+                <label htmlFor="confirmPassword">Confirm Password</label>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  placeholder="Re-enter your password"
+                  required={!isLogin}
+                  minLength="6"
+                />
+              </div>
+            )}
             {error && <div className="error-message">{error}</div>}
             <button type="submit" className="submit-btn" disabled={loading}>
               {loading ? "Loading..." : isLogin ? "Login" : "Create Account"}
