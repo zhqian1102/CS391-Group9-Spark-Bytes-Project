@@ -5,11 +5,19 @@ import EventDetailModal from "../../components/EventDetailModal";
 import NavigationBar from "../../components/NavigationBar";
 import Footer from "../../components/Footer";
 import "./EventsPage.css";
+import supabase, { APP_API_URL } from "../../config/supabase.js";
+
+const API_URL = APP_API_URL;
+// console.log("API_URL:", API_URL);
 
 const EventsPage = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+
   const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFilter, setDateFilter] = useState("");
   const [dietaryFilter, setDietaryFilter] = useState("");
@@ -24,35 +32,33 @@ const EventsPage = () => {
     }
   }, [user, navigate]);
 
-  // Mock events data
+  // Fetch Events from the Database
   useEffect(() => {
-    const mockEvents = [
-      {
-        id: 1,
-        title: "Spark! Demo Day",
-        location: "CDS, Second Floor",
-        date: "10/25/2025",
-        time: "3pm - 4pm",
-        food: ["Cheese Pizza", "Pepperoni Pizza", "Cookies"],
-        spotsLeft: 8,
-        totalSpots: 15,
-        image:
-          "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&h=400&fit=crop",
-        dietary: ["Vegan", "Gluten-Free", "Kosher"],
-        dietaryTags: ["Vegan", "Halal", "Kosher"],
-        organizer: "CS Department",
-        description:
-          "Join us for the exciting Spark! Demo Day where students showcase their innovative projects and ideas. Great food and networking opportunities!",
-        pickupInstructions:
-          "Please arrive 10 minutes before the event time. Food will be served at the registration desk on the second floor.",
-        foodItems: [
-          { name: "Cheese pizza", quantity: 8, unit: "slices" },
-          { name: "Classic pepperoni pizza", quantity: 12, unit: "slices" },
-          { name: "Chocolate chip cookies", quantity: 20, unit: "pieces" },
-        ],
-      },
-    ];
-    setEvents(mockEvents);
+    const fetchEvents = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        const token = session?.access_token;
+
+        const res = await fetch(`${API_URL}/api/events`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) throw new Error("Failed to fetch events");
+
+        const data = await res.json();
+        setEvents(data.events || []);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching events:", err);
+      }
+    };
+
+    fetchEvents();
   }, []);
 
   const handleClearFilters = () => {
@@ -81,19 +87,26 @@ const EventsPage = () => {
     handleCloseModal();
   };
 
+  // search and filter
   const filteredEvents = events.filter((event) => {
     const matchesSearch =
       searchQuery === "" ||
-      event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      event.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      event.food.some((f) =>
-        f.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      event.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (event.food_items &&
+        event.food_items.some((f) =>
+          f.item.toLowerCase().includes(searchQuery.toLowerCase())
+        ));
+
     const matchesDate = !dateFilter || event.date === dateFilter;
+
     const matchesDietary =
-      !dietaryFilter || event.dietary.includes(dietaryFilter);
+      !dietaryFilter ||
+      (event.dietary_options && event.dietary_options.includes(dietaryFilter));
+
     const matchesLocation =
-      !locationFilter || event.location.includes(locationFilter);
+      !locationFilter ||
+      event.location?.toLowerCase().includes(locationFilter.toLowerCase());
 
     return matchesSearch && matchesDate && matchesDietary && matchesLocation;
   });
@@ -175,84 +188,109 @@ const EventsPage = () => {
               <option value="COM">COM</option>
               <option value="ENG">ENG</option>
               <option value="Mugar">Mugar Library</option>
+              <option value="Others">Others</option>
             </select>
           </div>
 
           <button className="clear-btn" onClick={handleClearFilters}>
             Clear
           </button>
-          <button className="search-btn">Search</button>
         </div>
 
-        {/* Events Count */}
-        <p className="events-count">{filteredEvents.length} events available</p>
+        {/* Events */}
+        {loading ? (
+          <p>Loading events...</p>
+        ) : error ? (
+          <p className="error-message">{error}</p>
+        ) : (
+          <>
+            <p className="events-count">
+              {filteredEvents.length} events available
+            </p>
 
-        {/* Events List */}
-        <div className="events-list">
-          {filteredEvents.length === 0 ? (
-            <div className="no-events">
-              <p>No events found matching your filters.</p>
-              <button
-                onClick={handleClearFilters}
-                className="clear-filters-btn"
-              >
-                Clear Filters
-              </button>
-            </div>
-          ) : (
-            filteredEvents.map((event) => (
-              <div key={event.id} className="event-card">
-                <div className="event-image">
-                  <img src={event.image} alt={event.title} />
+            <div className="events-list">
+              {filteredEvents.length === 0 ? (
+                <div className="no-events">
+                  <p>No events found matching your filters.</p>
+                  <button
+                    onClick={handleClearFilters}
+                    className="clear-filters-btn"
+                  >
+                    Clear Filters
+                  </button>
                 </div>
+              ) : (
+                filteredEvents.map((event) => (
+                  <div key={event.id} className="event-card">
+                    <div className="event-image">
+                      <img
+                        src={
+                          event.image_urls?.[0] ||
+                          "https://placehold.co/600x400?text=No+Image"
+                        }
+                        alt={event.title}
+                      />
+                    </div>
 
-                <div className="event-details">
-                  <div className="event-header">
-                    <h3 className="event-title">{event.title}</h3>
-                    <span className="spots-badge">
-                      {event.spotsLeft} Spots Left
-                    </span>
-                  </div>
-
-                  <div className="event-info">
-                    <div className="info-item">
-                      <span className="info-icon">📍</span>
-                      <span>Location: {event.location}</span>
-                    </div>
-                    <div className="info-item">
-                      <span className="info-icon">📅</span>
-                      <span>Date: {event.date}</span>
-                    </div>
-                    <div className="info-item">
-                      <span className="info-icon">🕐</span>
-                      <span>Time: {event.time}</span>
-                    </div>
-                    <div className="info-item">
-                      <span className="info-icon">🍕</span>
-                      <span>Food: {event.food.join(", ")} ....</span>
-                    </div>
-                  </div>
-
-                  <div className="event-footer">
-                    <div className="dietary-tags">
-                      {event.dietary.map((tag) => (
-                        <span key={tag} className="dietary-tag">
-                          {tag}
+                    <div className="event-details">
+                      <div className="event-header">
+                        <h3 className="event-title">{event.title}</h3>
+                        <span className="spots-badge">
+                          {event.capacity
+                            ? `${event.capacity} Spots`
+                            : "Spots Available"}
                         </span>
-                      ))}
+                      </div>
+
+                      <div className="event-info">
+                        <div className="info-item">
+                          <span className="info-icon">📍</span>
+                          <span>Location: {event.location}</span>
+                        </div>
+                        <div className="info-item">
+                          <span className="info-icon">📅</span>
+                          <span>Date: {event.date}</span>
+                        </div>
+                        <div className="info-item">
+                          <span className="info-icon">🕐</span>
+                          <span>Time: {event.time}</span>
+                        </div>
+                      </div>
+
+                      {event.food_items && event.food_items.length > 0 && (
+                        <div className="info-item">
+                          <span className="info-icon">🍕</span>
+                          <span>
+                            Food:{" "}
+                            {event.food_items
+                              .map((f) => `${f.item}, ${f.qty}`)
+                              .join("; ")}
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="event-footer">
+                        <div className="dietary-tags">
+                          {event.dietary_options?.map((tag) => (
+                            <span key={tag} className="dietary-tag">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                        <button
+                          className="view-detail-btn"
+                          onClick={() => handleViewDetail(event)}
+                        >
+                          View Detail
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      className="view-detail-btn"
-                      onClick={() => handleViewDetail(event)}
-                    >
-                      View Detail
-                    </button>
                   </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+                ))
+              )}
+            </div>
+          </>
+        )}
       </main>
 
       {/* Event Detail Modal */}
