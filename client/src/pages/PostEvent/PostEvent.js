@@ -3,9 +3,9 @@ import NavigationBar from "../../components/NavigationBar";
 import Footer from "../../components/Footer";
 import "./PostEvent.css";
 import { useNavigate } from "react-router-dom";
-import supabase from "../../config/supabase.js";
+import supabase, { APP_API_URL } from "../../config/supabase.js";
 
-const API_URL = process.env.REACT_APP_API_URL;
+const API_URL = APP_API_URL;
 
 export default function PostEvent() {
   const [title, setTitle] = useState("");
