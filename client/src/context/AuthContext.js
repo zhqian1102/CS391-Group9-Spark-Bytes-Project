@@ -207,6 +207,37 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
   };
 
+  const updateProfile = async (updates) => {
+    try {
+      const updatedUser = { ...user, ...updates };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      // If using Supabase, update there too
+      if (supabase) {
+        const { error } = await supabase
+          .from('users')
+          .update(updates)
+          .eq('id', user.id);
+        
+        if (error) throw error;
+      }
+      
+      return { success: true, user: updatedUser };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  };
+  
+  const refreshUser = async () => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+      return { success: true };
+    }
+    return { success: false };
+  };
+  
   const value = {
     user,
     login,
@@ -214,6 +245,8 @@ export const AuthProvider = ({ children }) => {
     verifyEmail,
     resendVerificationCode,
     logout,
+    updateProfile,
+    refreshUser, 
     isAuthenticated: !!user
   };
 
