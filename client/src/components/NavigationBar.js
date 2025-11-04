@@ -1,15 +1,18 @@
 import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "./NavigationBar.css";
 
 const NavigationBar = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [showProfile, setShowProfile] = useState(false);
   const [alertsOn, setAlertsOn] = useState(true);
 
   const handleLogout = () => {
     if (window.confirm("Confirm logout?")) {
       logout();
+      navigate("/login");
     }
   };
 
@@ -19,7 +22,11 @@ const NavigationBar = () => {
 
   const handleViewProfile = () => {
     setShowProfile(false);
-    window.location.href = "/profile";
+    navigate("/profile");
+  };
+
+  const handleNotifications = () => {
+    navigate("/notifications");
   };
 
   const toggleAlerts = () => {
@@ -49,20 +56,20 @@ const NavigationBar = () => {
 
       {/* Navigation links */}
       <nav className="header-right">
-        <a href="/userdashboard" className="nav-link">
+        <Link to="/userdashboard" className="nav-link">
           Dashboard
-        </a>
-        <a href="/events" className="nav-link">
+        </Link>
+        <Link to="/events" className="nav-link">
           Events
-        </a>
-        <a href="/about" className="nav-link">
+        </Link>
+        <Link to="/about" className="nav-link">
           About
-        </a>
+        </Link>
 
         {/* Notification Bell */}
         <button
           className="icon-button notification-button"
-          onClick={() => window.location.href = '/notifications'}
+          onClick={handleNotifications}
           title="Notifications"
         >
           <span>🔔</span>
