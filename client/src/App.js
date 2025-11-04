@@ -7,6 +7,7 @@ import UserDashboard from "./pages/Dashboard/UserDashboard";
 import PostEvent from "./pages/PostEvent/PostEvent";
 import NotificationPage from "./components/NotificationPage";
 import AboutPage from "./pages/About/AboutPage";
+import UserProfile from "./pages/UserProfile/UserProfile";
 import "./App.css";
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
             <Route path="/userdashboard" element={<UserDashboard />} />
             <Route path="/notifications" element={<NotificationPage />} />
             <Route path="/about" element={<AboutPage />} />
+            <Route path="/profile" element={<UserProfile />} />
           </Routes>
         </div>
       </Router>
