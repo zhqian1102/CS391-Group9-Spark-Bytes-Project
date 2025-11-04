@@ -159,7 +159,7 @@ const Login = () => {
     <div className="login-container">
       <div className="login-left">
         <div className="welcome-section">
-          <h1 className="welcome-title">Welcome to Spark! Bytes</h1>
+          <h1 className="login-welcome-title">Welcome to Spark! Bytes</h1>
           <img
             src="/sparkbytes.png"
             alt="Spark Bytes Logo"

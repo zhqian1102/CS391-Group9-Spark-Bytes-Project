@@ -22,12 +22,12 @@
   max-width: 600px;
 }
 
-.welcome-title {
+.login-welcome-title {
   font-size: 64px;
   font-weight: 700;
   margin-bottom: 40px;
   line-height: 1.2;
-  color: white !important;
+  color: rgb(255, 255, 255) !important;
 }
 
 .logo-image {
@@ -331,7 +331,7 @@
     padding: 40px 20px;
   }
 
-  .welcome-title {
+  .login-welcome-title {
     font-size: 36px;
     margin-bottom: 20px;
   }
@@ -376,7 +376,7 @@
     padding: 10px;
   }
 
-  .welcome-title {
+  .login-welcome-title {
     font-size: 28px;
   }
 }
