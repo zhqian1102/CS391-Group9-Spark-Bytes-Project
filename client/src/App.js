@@ -6,6 +6,7 @@ import EventsPage from "./pages/Events/EventsPage";
 import UserDashboard from "./pages/Dashboard/UserDashboard";
 import PostEvent from "./pages/PostEvent/PostEvent";
 import NotificationPage from "./components/NotificationPage";
+import AboutPage from "./pages/About/AboutPage";
 import "./App.css";
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
             <Route path="/post" element={<PostEvent />} />
             <Route path="/userdashboard" element={<UserDashboard />} />
             <Route path="/notifications" element={<NotificationPage />} />
+            <Route path="/about" element={<AboutPage />} />
           </Routes>
         </div>
       </Router>
