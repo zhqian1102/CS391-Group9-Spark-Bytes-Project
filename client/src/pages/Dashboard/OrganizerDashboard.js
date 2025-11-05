@@ -79,7 +79,7 @@ const OrganizerDashboard = () => {
   };
 
   return (
-    <div className="userdashboard-container">
+    <div className="organizerdashboard-container">
       {/* Navigation Component */}
       <NavigationBar />
       {/* Main Content */}
