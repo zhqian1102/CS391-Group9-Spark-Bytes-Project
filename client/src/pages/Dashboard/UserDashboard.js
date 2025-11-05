@@ -29,7 +29,7 @@ const UserDashboard = () => {
       spotsLeft: 3,
       totalSpots: 20,
       image:
-        "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&h=320&fit=crop",
+        "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400&h=320&fit=crop",
       tags: ["Vegan", "Gluten-Free", "Kosher"],
       dietaryTags: ["Vegan", "Gluten-Free", "Kosher"],
       description: "Join us for our demo day with amazing food!", // ← OPTIONAL
