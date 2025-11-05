@@ -1,22 +1,22 @@
-const express = require('express');
-const { createClient } = require('@supabase/supabase-js');
-const router = express.Router();
+import express from 'express';
+import supabase from '../config/supabase.js';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
+const router = express.Router();
 
 // Middleware to get user from token
 const authenticateUser = async (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'No token' });
   
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-  if (error) return res.status(401).json({ error: 'Invalid token' });
-  
-  req.userId = user.id;
-  next();
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (error) return res.status(401).json({ error: 'Invalid token' });
+    
+    req.userId = user.id;
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: 'Auth failed' });
+  }
 };
 
 // GET profile
@@ -33,11 +33,15 @@ router.get('/profile', authenticateUser, async (req, res) => {
 
 // PUT profile
 router.put('/profile', authenticateUser, async (req, res) => {
-  const { name, phone, bio, dietaryPreferences, notificationSettings } = req.body;
+  const { name, phone, dietaryPreferences } = req.body;
   
   const { data, error } = await supabase
     .from('users')
-    .update({ name, phone, bio, dietary_preferences: dietaryPreferences, notification_settings: notificationSettings })
+    .update({ 
+      name, 
+      phone, 
+      dietary_preferences: dietaryPreferences 
+    })
     .eq('id', req.userId)
     .select()
     .single();
@@ -46,4 +50,4 @@ router.put('/profile', authenticateUser, async (req, res) => {
   res.json({ success: true, user: data, message: 'Profile updated' });
 });
 
-module.exports = router;
+export default router;
