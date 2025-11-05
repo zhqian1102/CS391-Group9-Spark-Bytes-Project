@@ -214,13 +214,22 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(updatedUser));
       
       // If using Supabase, update there too
-      if (supabase) {
+      if (supabase && user?.id) {
+        // Convert camelCase to snake_case for database
+        const dbUpdates = {};
+        if (updates.name) dbUpdates.name = updates.name;
+        if (updates.phone) dbUpdates.phone = updates.phone;
+        if (updates.dietaryPreferences) dbUpdates.dietary_preferences = updates.dietaryPreferences;
+        
         const { error } = await supabase
           .from('users')
-          .update(updates)
+          .update(dbUpdates)
           .eq('id', user.id);
         
-        if (error) throw error;
+        if (error) {
+          console.error('Supabase update error:', error);
+          // Still return success since localStorage was updated
+        }
       }
       
       return { success: true, user: updatedUser };
