@@ -72,11 +72,10 @@ const OrganizerDashboard = () => {
     },
   ]);
 
-  const [isOrganizerView, setIsOrganizerView] = useState(false);
+  const [isOragnizerView, setIsOrganizerView] = useState(true);
 
   const handleToggleView = () => {
-    setIsOrganizerView(!isOrganizerView);
-    navigate(isOrganizerView ? "/userdashboard" : "/organizerdashboard");
+    navigate("/userdashboard");
   };
 
   return (
@@ -128,6 +127,10 @@ const OrganizerDashboard = () => {
                     alt={event.title}
                     className="event-image"
                   />
+                  {/* Spots Left tag */}
+                  <span className="spots-left">
+                    {event.spotsLeft} Spots Left
+                  </span>
                 </div>
 
                 {/* Event content*/}
@@ -172,7 +175,7 @@ const OrganizerDashboard = () => {
                         })
                       }
                     >
-                      Edit Event
+                      View & Edit Event
                     </button>
                   </div>
                 </div>

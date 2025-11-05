@@ -145,6 +145,7 @@
   align-items: center;
   gap: 1.5rem;
   flex-wrap: wrap;
+  flex-direction: row-reverse;
 }
 
 .section-header-left h3 {

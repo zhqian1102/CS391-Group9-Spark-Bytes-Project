@@ -97,8 +97,7 @@ const UserDashboard = () => {
   };
 
   const handleToggleView = () => {
-    setIsOrganizerView(!isOrganizerView);
-    navigate(isOrganizerView ? "/userdashboard" : "/organizerdashboard");
+    navigate("/organizerdashboard");
   };
 
   return (
