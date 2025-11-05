@@ -76,7 +76,6 @@ const UserDashboard = () => {
   // Modal state
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [isOrganizerView, setIsOrganizerView] = useState(false);
 
   const handleViewDetails = (event) => {
     setSelectedEvent(event);

@@ -72,8 +72,6 @@ const OrganizerDashboard = () => {
     },
   ]);
 
-  const [isOragnizerView, setIsOrganizerView] = useState(true);
-
   const handleToggleView = () => {
     navigate("/userdashboard");
   };
