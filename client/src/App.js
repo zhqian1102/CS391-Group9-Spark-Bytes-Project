@@ -4,6 +4,7 @@ import { AuthProvider } from "./context/AuthContext";
 import Login from "./pages/LogIn/Login";
 import EventsPage from "./pages/Events/EventsPage";
 import UserDashboard from "./pages/Dashboard/UserDashboard";
+import OrganizerDashboard from "./pages/Dashboard/OrganizerDashboard";
 import PostEvent from "./pages/PostEvent/PostEvent";
 import NotificationPage from "./components/NotificationPage";
 import AboutPage from "./pages/About/AboutPage";
@@ -21,6 +22,7 @@ function App() {
             <Route path="/events" element={<EventsPage />} />
             <Route path="/post" element={<PostEvent />} />
             <Route path="/userdashboard" element={<UserDashboard />} />
+            <Route path="/organizerdashboard" element={<OrganizerDashboard />} />
             <Route path="/notifications" element={<NotificationPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/profile" element={<UserProfile />} />

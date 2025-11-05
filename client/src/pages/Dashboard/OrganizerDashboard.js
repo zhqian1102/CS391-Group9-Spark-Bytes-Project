@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import "./UserDashboard.css";
-import EventDetailModal from "../../components/EventDetailModal";
+import "./OrganizerDashboard.css";
 import NavigationBar from "../../components/NavigationBar";
 import Footer from "../../components/Footer";
 
-const UserDashboard = () => {
+const OrganizerDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -73,28 +72,7 @@ const UserDashboard = () => {
     },
   ]);
 
-  // Modal state
-  const [selectedEvent, setSelectedEvent] = useState(null);
-  const [showModal, setShowModal] = useState(false);
   const [isOrganizerView, setIsOrganizerView] = useState(false);
-
-  const handleViewDetails = (event) => {
-    setSelectedEvent(event);
-    setShowModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setSelectedEvent(null);
-  };
-
-  /* Cancel event state */
-  const handleCancel = (eventId) => {
-    if (window.confirm("Confirm cancellation?")) {
-      alert(`Cancelled reservation for event ${eventId}`);
-      // Later: remove cancelled event from reservedEvents
-    }
-  };
 
   const handleToggleView = () => {
     setIsOrganizerView(!isOrganizerView);
@@ -106,7 +84,7 @@ const UserDashboard = () => {
       {/* Navigation Component */}
       <NavigationBar />
       {/* Main Content */}
-      <main className="userdashboard-main">
+      <main className="organizerdashboard-main">
         <div className="welcome-section">
           <h2 className="dashboard-welcome-title">
             Welcome back, {user?.name || "Tester"}!
@@ -114,16 +92,16 @@ const UserDashboard = () => {
         </div>
 
         {/* Reserved Events Section */}
-        <section className="reserved-events-section">
+        <section className="posted-events-section">
           <div className="section-header">
             <div className="section-header-left">
-              <h3>My Reserved Events</h3>
+              <h3>My Events</h3>
               <div className="view-toggle-container">
                 <span className="toggle-label">User</span>
                 <label className="toggle-switch">
                   <input
                     type="checkbox"
-                    checked={false}
+                    checked={true}
                     onChange={handleToggleView}
                   />
                   <span className="slider"></span>
@@ -132,10 +110,10 @@ const UserDashboard = () => {
               </div>
             </div>
             <button
-              className="view-events-button"
-              onClick={() => navigate("/events")}
+              className="view-all-events-button"
+              onClick={() => navigate("/post")}
             >
-              View Events
+              View All Events
             </button>
           </div>
 
@@ -150,17 +128,12 @@ const UserDashboard = () => {
                     alt={event.title}
                     className="event-image"
                   />
-                  {/* Spots left tag */}
-                  <span className="spots-left">
-                    {event.spotsLeft} Spots Left
-                  </span>
                 </div>
 
                 {/* Event content*/}
                 <div className="event-content">
                   <div className="event-header">
                     <h4 className="event-title">{event.title}</h4>
-                    <span className="reserved-badge">Reserved</span>
                   </div>
 
                   <div className="event-detail">
@@ -187,21 +160,19 @@ const UserDashboard = () => {
                   </div>
 
                   <div className="event-actions">
-                    {/* View details button */}
+                    {/* Edit event button */}
                     <button
-                      className="view-details-button"
-                      onClick={() => {
-                        handleViewDetails(event);
-                      }}
+                      className="edit-event-button"
+                      onClick={() =>
+                        navigate("/post", {
+                          state: {
+                            eventID: event.id,
+                            returnTo: "/organizerdashboard",
+                          },
+                        })
+                      }
                     >
-                      View Details
-                    </button>
-                    {/* Cancel reservation button */}
-                    <button
-                      className="cancel-button"
-                      onClick={() => handleCancel(event.id)}
-                    >
-                      Cancel
+                      Edit Event
                     </button>
                   </div>
                 </div>
@@ -213,17 +184,8 @@ const UserDashboard = () => {
 
       {/* Footer Component */}
       <Footer />
-
-      {/* Event Detail Modal */}
-      {showModal && selectedEvent && (
-        <EventDetailModal
-          event={selectedEvent}
-          open={showModal}
-          onClose={handleCloseModal}
-        />
-      )}
     </div>
   );
 };
 
-export default UserDashboard;
+export default OrganizerDashboard;
