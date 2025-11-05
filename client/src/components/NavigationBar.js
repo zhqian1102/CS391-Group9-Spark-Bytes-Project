@@ -16,6 +16,10 @@ const NavigationBar = () => {
     }
   };
 
+  const handleCreateNewEvent = () => {
+    navigate("/post");
+  };
+
   const toggleProfile = () => {
     setShowProfile(!showProfile);
   };
@@ -98,13 +102,15 @@ const NavigationBar = () => {
 
               <div className="profile-menu-divider"></div>
 
+              <buttom className="profile-menu-item" onClick={handleCreateNewEvent}>
+                <span>Create New Event</span>
+              </buttom>
+
               <button className="profile-menu-item" onClick={handleViewProfile}>
-                <span>👤</span>
                 <span>View Profile</span>
               </button>
 
               <button className="profile-menu-item" onClick={toggleAlerts}>
-                <span>{alertsOn ? "🔔" : "🔕"}</span>
                 <span>Alerts {alertsOn ? "on" : "off"}</span>
               </button>
 
@@ -114,7 +120,6 @@ const NavigationBar = () => {
                 className="profile-menu-item logout-item"
                 onClick={handleLogout}
               >
-                <span>🚪</span>
                 <span>Logout</span>
               </button>
             </div>
