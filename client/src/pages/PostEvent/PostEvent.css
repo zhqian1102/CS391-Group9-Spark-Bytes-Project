@@ -176,7 +176,7 @@
   background: #fce4e4;
 }
 
-/* RESPONSIVE */
+
 @media (max-width: 768px) {
   .post-main-content {
     padding: 20px;
@@ -186,4 +186,18 @@
     flex-direction: column;
     gap: 15px;
   }
+}
+
+.image-preview {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.preview-img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
 }

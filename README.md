@@ -2,6 +2,23 @@
 
 A platform for Boston University students and faculty members to post events that provide food or snacks. The aim is to reduce food waste resulting from over-purchasing for events and at the same time, help students access free food.
 
+---
+
+## 📚 Documentation & Setup Guides
+
+| Guide | Description |
+|-------|-------------|
+| 📧 [**Email Verification Setup**](./EMAIL-VERIFICATION-SETUP.md) | Configure email verification with Gmail for user registration |
+| 🗄️ [**Supabase Integration**](./SUPABASE-INTEGRATION-GUIDE.md) | Set up cloud database and authentication |
+| 🔧 [**Supabase Setup (Quick)**](./SUPABASE-SETUP.md) | Quick start guide for Supabase configuration |
+| 📝 [**Changes Summary**](./CHANGES-SUMMARY.md) | Detailed technical documentation of recent updates |
+| 💾 [**SQL Schema**](./SUPABASE-USERS-TABLE-SETUP.sql) | Database table setup script |
+
+**👉 First time setup?** Follow these guides in order:
+1. Basic setup (below) → 2. [Email Verification](./EMAIL-VERIFICATION-SETUP.md) → 3. [Supabase Integration](./SUPABASE-INTEGRATION-GUIDE.md)
+
+---
+
 ## Features
 
 - 🔐 Secure login/signup with BU email validation
@@ -124,15 +141,31 @@ CS391-Group9-Spark-Bytes-Project-main/
 - Responsive design
 - BU colors (red gradient and white)
 
+## Implemented Features
+
+### ✅ Authentication System
+- Secure login/signup with BU email validation (@bu.edu)
+- **Email verification with 6-digit codes** (NEW!)
+- Supabase Auth integration with cloud storage
+- JWT token-based authentication
+- Dual storage system (Supabase + local fallback)
+- User profiles with customizable data
+
+### ✅ User Management
+- User type support (students and event organizers)
+- Profile management and viewing
+- Password encryption with bcrypt
+- Email verification system with expiration
+- Resend verification code functionality
+
 ## Future Enhancements
 
 - Event posting and discovery
 - Real-time notifications
-- User profiles
 - Event filtering by location and time
 - Image uploads for events
 - Admin dashboard
-- Email verification
+- Push notifications for mobile
 
 ## License
 

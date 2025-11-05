@@ -129,14 +129,17 @@ const EventsPage = () => {
         {/* Page Title and Create Button */}
         <div className="events-page-header">
           <h1 className="events-page-title">Available Food Events</h1>
-          {user?.userType === "organizer" && (
+          <button className="create-post-btn" onClick={() => navigate("/post")}>
+            Create a Post
+          </button>
+          {/* {user?.userType === "organizer" && (
             <button
               className="create-post-btn"
               onClick={() => navigate("/post")}
             >
               Create a Post
             </button>
-          )}
+          )} */}
         </div>
 
         {/* Filters Section */}
@@ -263,7 +266,7 @@ const EventsPage = () => {
                           <span>
                             Food:{" "}
                             {event.food_items
-                              .map((f) => `${f.item}, ${f.qty}`)
+                              .map((f) => `${f.item}: ${f.qty}`)
                               .join("; ")}
                           </span>
                         </div>

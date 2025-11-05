@@ -8,7 +8,7 @@ import Footer from "../../components/Footer";
 
 const UserDashboard = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -102,7 +102,7 @@ const UserDashboard = () => {
       {/* Main Content */}
       <main className="userdashboard-main">
         <div className="welcome-section">
-          <h2 className="welcome-title">
+          <h2 className="dashboard-welcome-title">
             Welcome back, {user?.name || "Tester"}!
           </h2>
         </div>
