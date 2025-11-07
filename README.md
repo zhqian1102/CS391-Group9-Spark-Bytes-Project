@@ -8,14 +8,15 @@ A platform for Boston University students and faculty members to post events tha
 
 | Guide | Description |
 |-------|-------------|
-| 📧 [**Email Verification Setup**](./EMAIL-VERIFICATION-SETUP.md) | Configure email verification with Gmail for user registration |
+| � [**Backend Setup Guide**](./BACKEND-SETUP-GUIDE.md) | **START HERE!** Complete guide to get the backend running |
+| �📧 [**Email Verification Setup**](./EMAIL-VERIFICATION-SETUP.md) | Configure email verification with Gmail for user registration |
 | 🗄️ [**Supabase Integration**](./SUPABASE-INTEGRATION-GUIDE.md) | Set up cloud database and authentication |
 | 🔧 [**Supabase Setup (Quick)**](./SUPABASE-SETUP.md) | Quick start guide for Supabase configuration |
 | 📝 [**Changes Summary**](./CHANGES-SUMMARY.md) | Detailed technical documentation of recent updates |
 | 💾 [**SQL Schema**](./SUPABASE-USERS-TABLE-SETUP.sql) | Database table setup script |
 
 **👉 First time setup?** Follow these guides in order:
-1. Basic setup (below) → 2. [Email Verification](./EMAIL-VERIFICATION-SETUP.md) → 3. [Supabase Integration](./SUPABASE-INTEGRATION-GUIDE.md)
+1. **[Backend Setup Guide](./BACKEND-SETUP-GUIDE.md)** (start here!) → 2. [Email Verification](./EMAIL-VERIFICATION-SETUP.md) → 3. [Supabase Integration](./SUPABASE-INTEGRATION-GUIDE.md)
 
 ---
 
@@ -85,6 +86,50 @@ Quick version:
 5. Restart the app
 
 Without Supabase, the app uses browser localStorage (data clears on logout).
+
+## ⚠️ Common Issues & Quick Fixes
+
+### "Failed to fetch" Error When Logging In
+
+**Problem:** Backend server is not running.
+
+**Solution:**
+```bash
+# From project root
+npm start
+```
+
+The backend MUST be running on `http://localhost:5001` for the app to work!
+
+**Check if it's running:** Open `http://localhost:5001` in your browser. You should see the API welcome message.
+
+**For detailed help:** See [BACKEND-SETUP-GUIDE.md](./BACKEND-SETUP-GUIDE.md)
+
+### Port Already in Use
+
+**Problem:** Error says port 5001 is already in use.
+
+**Solution (Mac/Linux):**
+```bash
+lsof -ti:5001 | xargs kill -9
+npm start
+```
+
+**Solution (Windows):**
+```powershell
+Get-Process -Id (Get-NetTCPConnection -LocalPort 5001).OwningProcess | Stop-Process
+npm start
+```
+
+### Module Not Found Errors
+
+**Solution:**
+```bash
+rm -rf node_modules package-lock.json
+npm run install-all
+```
+
+**📚 More troubleshooting:** Check [BACKEND-SETUP-GUIDE.md](./BACKEND-SETUP-GUIDE.md#troubleshooting)
 
 ## Project Structure
 
