@@ -36,8 +36,14 @@ export default function PostEvent() {
   };
 
   const handleImageChange = (e) => {
-    setImages([...e.target.files]);
-  };
+  const files = Array.from(e.target.files);
+  if (files.length > 5) {
+    alert("Up to 5 images.");
+    e.target.value = null; 
+    return;
+  }
+  setImages(files);
+};
 
   const uploadImagesToSupabase = async (files) => {
     const uploadedUrls = [];
@@ -282,6 +288,17 @@ export default function PostEvent() {
             onChange={handleImageChange}
             required
           />
+          <div className="image-preview">
+              {images.length > 0 &&
+                images.map((img, idx) => (
+                  <img
+                    key={idx}
+                    src={URL.createObjectURL(img)}
+                    alt={`preview-${idx}`}
+                    className="preview-img"
+                  />
+                ))}
+            </div>
 
           <div className="form-group">
             <label>Pickup Instructions</label>

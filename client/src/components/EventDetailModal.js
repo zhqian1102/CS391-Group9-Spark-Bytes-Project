@@ -1,4 +1,3 @@
-// EventDetailModal.js
 import React, { useEffect, useRef } from 'react';
 import './EventDetailModal.css';
 
