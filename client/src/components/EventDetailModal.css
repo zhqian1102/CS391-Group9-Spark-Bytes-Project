@@ -31,11 +31,18 @@
   max-width: 450px;                
   min-width: 450px;                
   max-height: 90vh;                
-  margin: 0 auto;
-  overflow: hidden;                  
+  margin: 0 auto; 
+  overflow-y: auto;      
+  overflow-x: hidden;     
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  scrollbar-width: none;
+}
+
+.modal-content::-webkit-scrollbar {
+  width: 0;
+  height: 0;                     
 }
 
 /* Header */
@@ -74,9 +81,7 @@
 /* Modal body */
 .modal-body {
   padding: 24px 28px;            
-  overflow-y: auto;
   flex: 1;
-  max-height: min(68vh, 640px);      
 }
 
 /* Modal title */
