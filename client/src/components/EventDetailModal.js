@@ -62,6 +62,8 @@ const EventDetailModal = ({ event, open, onClose, onReserve }) => {
 
   if (!open || !event) return null;
 
+  if (!open || !event) return null;
+
   const servingCapacity = event.totalSpots;
 
   return (
