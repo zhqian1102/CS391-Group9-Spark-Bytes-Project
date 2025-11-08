@@ -1,8 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './EventDetailModal.css';
 
 const EventDetailModal = ({ event, open, onClose, onReserve }) => {
   const dialogRef = useRef(null);
+  const [isReserving, setIsReserving] = useState(false);
 
   // ESC to close
   useEffect(() => {
@@ -27,6 +28,19 @@ const EventDetailModal = ({ event, open, onClose, onReserve }) => {
   }, [open]);
 
   const stopPropagation = (e) => e.stopPropagation();
+
+  const handleReserveClick = async () => {
+    if (isReserving || event.isReserved) return;
+    
+    setIsReserving(true);
+    try {
+      await onReserve?.(event.id);
+    } catch (error) {
+      console.error('Reservation failed:', error);
+    } finally {
+      setIsReserving(false);
+    }
+  };
 
   if (!open || !event) return null;
 
@@ -146,10 +160,12 @@ const EventDetailModal = ({ event, open, onClose, onReserve }) => {
             </button>
             <button
               type="button"
-              className="modal-btn modal-btn-primary"
-              onClick={() => onReserve?.(event.id)}
+              className={`modal-btn ${event.isReserved ? 'modal-btn-secondary' : 'modal-btn-primary'}`}
+              onClick={handleReserveClick}
+              disabled={event.isReserved || isReserving}
+              style={event.isReserved ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
             >
-              Confirm Pickup
+              {isReserving ? 'Reserving...' : event.isReserved ? 'Reserved' : 'Reserve Event'}
             </button>
           </div>
         </div>
