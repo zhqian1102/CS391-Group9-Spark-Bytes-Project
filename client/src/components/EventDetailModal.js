@@ -42,6 +42,24 @@ const EventDetailModal = ({ event, open, onClose, onReserve }) => {
     }
   };
 
+  // Helper function to format date with proper weekday
+  const formatEventDate = (dateString) => {
+    try {
+      const date = new Date(dateString);
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return dateString; // Return original if parsing fails
+      }
+      return date.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        month: 'short', 
+        day: 'numeric' 
+      });
+    } catch (error) {
+      return dateString; // Return original on error
+    }
+  };
+
   if (!open || !event) return null;
 
   const servingCapacity = event.totalSpots;
@@ -83,7 +101,7 @@ const EventDetailModal = ({ event, open, onClose, onReserve }) => {
             <div className="modal-event-info">
               <div className="modal-info-item">
                 <span className="modal-info-icon" aria-hidden="true">📅</span>
-                <span>Saturday, {event.date}</span>
+                <span>{formatEventDate(event.date)}</span>
               </div>
               <div className="modal-info-item">
                 <span className="modal-info-icon" aria-hidden="true">🕐</span>
