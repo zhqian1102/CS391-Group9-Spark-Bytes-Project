@@ -90,10 +90,55 @@ const EventsPage = () => {
   };
 
   // Reserve food
-  const handleReserve = (eventId) => {
-    console.log("Reserved event:", eventId);
-    alert("Reservation confirmed!");
-    handleCloseModal();
+  const handleReserve = async (eventId) => {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const token = session?.access_token;
+      
+      if (!token) {
+        alert('Please log in to reserve an event');
+        return;
+      }
+
+      const res = await fetch(`${API_URL}/api/events/${eventId}/reserve`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to reserve event');
+      }
+
+      const data = await res.json();
+      console.log('Reservation successful:', data);
+      
+      // Update the event in local state to mark it as reserved
+      setEvents(prevEvents =>
+        prevEvents.map(event =>
+          event.id === eventId
+            ? { ...event, isReserved: true, capacity: event.capacity - 1 }
+            : event
+        )
+      );
+      
+      // Update selected event if it's open in modal
+      if (selectedEvent?.id === eventId) {
+        setSelectedEvent(prev => ({ ...prev, isReserved: true }));
+      }
+      
+      alert('Reservation confirmed!');
+      handleCloseModal();
+    } catch (error) {
+      console.error('Error reserving event:', error);
+      alert(error.message || 'Failed to reserve event. Please try again.');
+    }
   };
 
   //filter
@@ -284,8 +329,12 @@ const EventsPage = () => {
                         <button
                           className="view-detail-btn"
                           onClick={() => handleViewDetail(event)}
+                          style={event.isReserved ? {
+                            background: '#888',
+                            cursor: 'default'
+                          } : {}}
                         >
-                          View Detail
+                          {event.isReserved ? 'Reserved ✓' : 'View Detail'}
                         </button>
                       </div>
                     </div>
@@ -299,7 +348,20 @@ const EventsPage = () => {
 
       {/* Event Detail Modal */}
       <EventDetailModal
-        event={selectedEvent}
+        event={selectedEvent ? {
+          ...selectedEvent,
+          spotsLeft: selectedEvent.capacity || 0,
+          totalSpots: selectedEvent.capacity || 0,
+          image: selectedEvent.image_urls?.[0],
+          tags: selectedEvent.dietary_options || [],
+          dietaryTags: selectedEvent.dietary_options || [],
+          foodItems: selectedEvent.food_items?.map(f => ({
+            name: f.item,
+            quantity: f.qty,
+            unit: 'servings'
+          })) || [],
+          pickupInstructions: selectedEvent.pickup_instructions
+        } : null}
         open={isModalOpen}
         onClose={handleCloseModal}
         onReserve={handleReserve}

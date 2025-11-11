@@ -1,8 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './EventDetailModal.css';
 
 const EventDetailModal = ({ event, open, onClose, onReserve }) => {
   const dialogRef = useRef(null);
+  const [isReserving, setIsReserving] = useState(false);
 
   // ESC to close
   useEffect(() => {
@@ -27,6 +28,39 @@ const EventDetailModal = ({ event, open, onClose, onReserve }) => {
   }, [open]);
 
   const stopPropagation = (e) => e.stopPropagation();
+
+  const handleReserveClick = async () => {
+    if (isReserving || event.isReserved) return;
+    
+    setIsReserving(true);
+    try {
+      await onReserve?.(event.id);
+    } catch (error) {
+      console.error('Reservation failed:', error);
+    } finally {
+      setIsReserving(false);
+    }
+  };
+
+  // Helper function to format date with proper weekday
+  const formatEventDate = (dateString) => {
+    try {
+      const date = new Date(dateString);
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return dateString; // Return original if parsing fails
+      }
+      return date.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        month: 'short', 
+        day: 'numeric' 
+      });
+    } catch (error) {
+      return dateString; // Return original on error
+    }
+  };
+
+  if (!open || !event) return null;
 
   if (!open || !event) return null;
 
@@ -69,7 +103,7 @@ const EventDetailModal = ({ event, open, onClose, onReserve }) => {
             <div className="modal-event-info">
               <div className="modal-info-item">
                 <span className="modal-info-icon" aria-hidden="true">📅</span>
-                <span>Saturday, {event.date}</span>
+                <span>{formatEventDate(event.date)}</span>
               </div>
               <div className="modal-info-item">
                 <span className="modal-info-icon" aria-hidden="true">🕐</span>
@@ -146,10 +180,12 @@ const EventDetailModal = ({ event, open, onClose, onReserve }) => {
             </button>
             <button
               type="button"
-              className="modal-btn modal-btn-primary"
-              onClick={() => onReserve?.(event.id)}
+              className={`modal-btn ${event.isReserved ? 'modal-btn-secondary' : 'modal-btn-primary'}`}
+              onClick={handleReserveClick}
+              disabled={event.isReserved || isReserving}
+              style={event.isReserved ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
             >
-              Confirm Pickup
+              {isReserving ? 'Reserving...' : event.isReserved ? 'Reserved' : 'Reserve Event'}
             </button>
           </div>
         </div>
