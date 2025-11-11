@@ -1,13 +1,35 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "./NavigationBar.css";
 
 const NavigationBar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showProfile, setShowProfile] = useState(false);
   const [alertsOn, setAlertsOn] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const currentSearch = params.get("search") || "";
+    setSearchQuery(currentSearch);
+  }, [location.search]);
+
+  // ✅ Immediately update URL when on /events and search changes
+  useEffect(() => {
+    // only run this effect if you're actually on /events
+    if (!location.pathname.startsWith("/events")) return;
+
+    if (searchQuery.trim() === "") {
+      navigate("/events", { replace: true });
+    } else {
+      navigate(`/events?search=${encodeURIComponent(searchQuery.trim())}`, {
+        replace: true,
+      });
+    }
+  }, [searchQuery, navigate, location.pathname]);
 
   const handleLogout = () => {
     if (window.confirm("Confirm logout?")) {
@@ -54,6 +76,15 @@ const NavigationBar = () => {
             type="text"
             placeholder="Search for event, food or location"
             className="search-input"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && searchQuery.trim() !== "") {
+                navigate(
+                  `/events?search=${encodeURIComponent(searchQuery.trim())}`
+                );
+              }
+            }}
           />
         </div>
       </div>
@@ -102,7 +133,10 @@ const NavigationBar = () => {
 
               <div className="profile-menu-divider"></div>
 
-              <buttom className="profile-menu-item" onClick={handleCreateNewEvent}>
+              <buttom
+                className="profile-menu-item"
+                onClick={handleCreateNewEvent}
+              >
                 <span>Create New Event</span>
               </buttom>
 

@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import './EventDetailModal.css';
+import React, { useEffect, useRef, useState } from "react";
+import "./EventDetailModal.css";
 
 const EventDetailModal = ({ event, open, onClose, onReserve }) => {
   const dialogRef = useRef(null);
@@ -10,10 +10,10 @@ const EventDetailModal = ({ event, open, onClose, onReserve }) => {
     if (!open) return;
 
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') onClose?.();
+      if (e.key === "Escape") onClose?.();
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open, onClose]);
 
   // Lock body scroll
@@ -21,7 +21,7 @@ const EventDetailModal = ({ event, open, onClose, onReserve }) => {
     if (!open) return;
 
     const original = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = original;
     };
@@ -31,12 +31,12 @@ const EventDetailModal = ({ event, open, onClose, onReserve }) => {
 
   const handleReserveClick = async () => {
     if (isReserving || event.isReserved) return;
-    
+
     setIsReserving(true);
     try {
       await onReserve?.(event.id);
     } catch (error) {
-      console.error('Reservation failed:', error);
+      console.error("Reservation failed:", error);
     } finally {
       setIsReserving(false);
     }
@@ -50,10 +50,10 @@ const EventDetailModal = ({ event, open, onClose, onReserve }) => {
       if (isNaN(date.getTime())) {
         return dateString; // Return original if parsing fails
       }
-      return date.toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        month: 'short', 
-        day: 'numeric' 
+      return date.toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "short",
+        day: "numeric",
       });
     } catch (error) {
       return dateString; // Return original on error
@@ -86,11 +86,13 @@ const EventDetailModal = ({ event, open, onClose, onReserve }) => {
             {event.image && (
               <img
                 src={event.image}
-                alt={event.title || 'Event image'}
+                alt={event.title || "Event image"}
                 loading="lazy"
               />
             )}
-            <div className="modal-spots-badge">{event.spotsLeft} Spots Left</div>
+            <div className="modal-spots-badge">
+              {event.spotsLeft} Spots Left
+            </div>
           </div>
 
           {/* Body */}
@@ -102,15 +104,21 @@ const EventDetailModal = ({ event, open, onClose, onReserve }) => {
             {/* Basic info */}
             <div className="modal-event-info">
               <div className="modal-info-item">
-                <span className="modal-info-icon" aria-hidden="true">📅</span>
+                <span className="modal-info-icon" aria-hidden="true">
+                  📅
+                </span>
                 <span>{formatEventDate(event.date)}</span>
               </div>
               <div className="modal-info-item">
-                <span className="modal-info-icon" aria-hidden="true">🕐</span>
+                <span className="modal-info-icon" aria-hidden="true">
+                  🕐
+                </span>
                 <span>{event.time}</span>
               </div>
               <div className="modal-info-item">
-                <span className="modal-info-icon" aria-hidden="true">📍</span>
+                <span className="modal-info-icon" aria-hidden="true">
+                  📍
+                </span>
                 <span>{event.location}</span>
               </div>
             </div>
@@ -126,7 +134,9 @@ const EventDetailModal = ({ event, open, onClose, onReserve }) => {
             {event.pickupInstructions && (
               <div className="modal-pickup-section">
                 <h3 className="modal-section-title">
-                  <span className="modal-info-icon" aria-hidden="true">ℹ️</span>
+                  <span className="modal-info-icon" aria-hidden="true">
+                    ℹ️
+                  </span>
                   Pickup Instructions
                 </h3>
                 <p className="modal-pickup-text">{event.pickupInstructions}</p>
@@ -137,7 +147,9 @@ const EventDetailModal = ({ event, open, onClose, onReserve }) => {
             <div className="modal-food-section">
               <div className="modal-food-header">
                 <h3 className="modal-section-title">
-                  <span className="modal-info-icon" aria-hidden="true">🍱</span>
+                  <span className="modal-info-icon" aria-hidden="true">
+                    🍱
+                  </span>
                   Available Food
                 </h3>
 
@@ -180,12 +192,20 @@ const EventDetailModal = ({ event, open, onClose, onReserve }) => {
             </button>
             <button
               type="button"
-              className={`modal-btn ${event.isReserved ? 'modal-btn-secondary' : 'modal-btn-primary'}`}
+              className={`modal-btn ${
+                event.isReserved ? "modal-btn-secondary" : "modal-btn-primary"
+              }`}
               onClick={handleReserveClick}
               disabled={event.isReserved || isReserving}
-              style={event.isReserved ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+              style={
+                event.isReserved ? { opacity: 0.6, cursor: "not-allowed" } : {}
+              }
             >
-              {isReserving ? 'Reserving...' : event.isReserved ? 'Reserved' : 'Reserve Event'}
+              {isReserving
+                ? "Reserving..."
+                : event.isReserved
+                ? "Reserved"
+                : "Reserve Event"}
             </button>
           </div>
         </div>

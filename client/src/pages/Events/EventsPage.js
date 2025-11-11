@@ -97,73 +97,117 @@ const EventsPage = () => {
       } = await supabase.auth.getSession();
 
       const token = session?.access_token;
-      
+
       if (!token) {
-        alert('Please log in to reserve an event');
+        alert("Please log in to reserve an event");
         return;
       }
 
       const res = await fetch(`${API_URL}/api/events/${eventId}/reserve`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
       });
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to reserve event');
+        throw new Error(errorData.error || "Failed to reserve event");
       }
 
       const data = await res.json();
-      console.log('Reservation successful:', data);
-      
+      console.log("Reservation successful:", data);
+
       // Update the event in local state to mark it as reserved
-      setEvents(prevEvents =>
-        prevEvents.map(event =>
+      setEvents((prevEvents) =>
+        prevEvents.map((event) =>
           event.id === eventId
             ? { ...event, isReserved: true, capacity: event.capacity - 1 }
             : event
         )
       );
-      
+
       // Update selected event if it's open in modal
       if (selectedEvent?.id === eventId) {
-        setSelectedEvent(prev => ({ ...prev, isReserved: true }));
+        setSelectedEvent((prev) => ({ ...prev, isReserved: true }));
       }
-      
-      alert('Reservation confirmed!');
+
+      alert("Reservation confirmed!");
       handleCloseModal();
     } catch (error) {
-      console.error('Error reserving event:', error);
-      alert(error.message || 'Failed to reserve event. Please try again.');
+      console.error("Error reserving event:", error);
+      alert(error.message || "Failed to reserve event. Please try again.");
     }
   };
 
-  //filter
-  const filteredEvents = events.filter((event) => {
-    const matchesSearch =
-      searchQuery === "" ||
-      event.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      event.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (event.food_items &&
-        event.food_items.some((f) =>
-          f.item.toLowerCase().includes(searchQuery.toLowerCase())
-        ));
+  const parseEventDateTime = (dateStr, timeStr, end = false) => {
+    if (!dateStr) return null;
 
-    const matchesDate = !dateFilter || event.date === dateFilter;
+    let hour = 0,
+      minute = 0,
+      meridian = "";
 
-    const matchesDietary =
-      !dietaryFilter ||
-      (event.dietary_options && event.dietary_options.includes(dietaryFilter));
+    if (timeStr) {
+      const clean = timeStr.replace(/\s+/g, "").toUpperCase();
+      const parts = clean.split("-");
+      const target = end && parts.length > 1 ? parts[1] : parts[0];
+      const match = target.match(/(\d{1,2})(?::(\d{2}))?([AP]M)?/);
 
-    const matchesLocation =
-      !locationFilter ||
-      event.location?.toLowerCase().includes(locationFilter.toLowerCase());
+      if (match) {
+        hour = parseInt(match[1], 10);
+        minute = match[2] ? parseInt(match[2], 10) : 0;
+        meridian = match[3] || "";
 
-    return matchesSearch && matchesDate && matchesDietary && matchesLocation;
-  });
+        if (!meridian) meridian = hour >= 8 ? "PM" : "AM";
+        if (meridian === "PM" && hour < 12) hour += 12;
+        if (meridian === "AM" && hour === 12) hour = 0;
+      }
+    }
+
+    const [year, month, day] = dateStr.split("-").map(Number);
+    return new Date(year, month - 1, day, hour, minute);
+  };
+
+  // Apply Filters
+  const filteredEvents = events
+    .filter((event) => {
+      const now = new Date();
+      const startTime = parseEventDateTime(event.date, event.time, false);
+      const endTime = parseEventDateTime(event.date, event.time, true);
+
+      if (!startTime) return false;
+      // Show event if it hasn’t ended yet
+      if (endTime) return endTime >= now;
+      return startTime >= now;
+    })
+    .filter((event) => {
+      const matchesSearch =
+        searchQuery === "" ||
+        event.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        event.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (event.food_items &&
+          event.food_items.some((f) =>
+            f.item.toLowerCase().includes(searchQuery.toLowerCase())
+          ));
+
+      const matchesDate = !dateFilter || event.date === dateFilter;
+      const matchesDietary =
+        !dietaryFilter ||
+        (event.dietary_options &&
+          event.dietary_options.includes(dietaryFilter));
+      const matchesLocation =
+        !locationFilter ||
+        event.location?.toLowerCase().includes(locationFilter.toLowerCase());
+
+      return matchesSearch && matchesDate && matchesDietary && matchesLocation;
+    })
+    // Events sort by start time
+    .sort((a, b) => {
+      const aTime = parseEventDateTime(a.date, a.time);
+      const bTime = parseEventDateTime(b.date, b.time);
+      return aTime - bTime;
+    });
 
   return (
     <div className="events-page-container">
@@ -172,11 +216,6 @@ const EventsPage = () => {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
       />
-
-      {/* User Role Banner 
-      <div className="user-banner">
-        <span>home- {user?.userType || "event organizer"}</span>
-      </div> */}
 
       {/* Main Content */}
       <main className="events-main-content">
@@ -329,12 +368,16 @@ const EventsPage = () => {
                         <button
                           className="view-detail-btn"
                           onClick={() => handleViewDetail(event)}
-                          style={event.isReserved ? {
-                            background: '#888',
-                            cursor: 'default'
-                          } : {}}
+                          style={
+                            event.isReserved
+                              ? {
+                                  background: "#888",
+                                  cursor: "default",
+                                }
+                              : {}
+                          }
                         >
-                          {event.isReserved ? 'Reserved ✓' : 'View Detail'}
+                          {event.isReserved ? "Reserved ✓" : "View Detail"}
                         </button>
                       </div>
                     </div>
@@ -348,20 +391,25 @@ const EventsPage = () => {
 
       {/* Event Detail Modal */}
       <EventDetailModal
-        event={selectedEvent ? {
-          ...selectedEvent,
-          spotsLeft: selectedEvent.capacity || 0,
-          totalSpots: selectedEvent.capacity || 0,
-          image: selectedEvent.image_urls?.[0],
-          tags: selectedEvent.dietary_options || [],
-          dietaryTags: selectedEvent.dietary_options || [],
-          foodItems: selectedEvent.food_items?.map(f => ({
-            name: f.item,
-            quantity: f.qty,
-            unit: 'servings'
-          })) || [],
-          pickupInstructions: selectedEvent.pickup_instructions
-        } : null}
+        event={
+          selectedEvent
+            ? {
+                ...selectedEvent,
+                spotsLeft: selectedEvent.capacity || 0,
+                totalSpots: selectedEvent.capacity || 0,
+                image: selectedEvent.image_urls?.[0],
+                tags: selectedEvent.dietary_options || [],
+                dietaryTags: selectedEvent.dietary_options || [],
+                foodItems:
+                  selectedEvent.food_items?.map((f) => ({
+                    name: f.item,
+                    quantity: f.qty,
+                    unit: "servings",
+                  })) || [],
+                pickupInstructions: selectedEvent.pickup_instructions,
+              }
+            : null
+        }
         open={isModalOpen}
         onClose={handleCloseModal}
         onReserve={handleReserve}

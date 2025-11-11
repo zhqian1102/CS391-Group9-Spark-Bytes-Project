@@ -88,13 +88,55 @@ export const getAllEvents = async (req, res) => {
       if (user) user_id = user.id;
     }
 
-    const { data: events, error } = await supabase
+    // Get ?search= from query
+    const rawTerm = req.query.search || "";
+    const searchTerm = rawTerm.toLowerCase().trim();
+
+    // Always fetch all events first
+    const { data: allEvents, error } = await supabase
       .from("events")
       .select("*")
       .order("date", { ascending: true });
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase query error:", error);
+      return res.status(400).json({ error: "Invalid search query." });
+    }
 
+    let events = allEvents || [];
+
+    // ✅ Partial match filtering
+    if (searchTerm) {
+      events = events.filter((event) => {
+        const t = (val) => (val ? val.toString().toLowerCase() : "");
+
+        const inTitle = t(event.title).includes(searchTerm);
+        const inLocation = t(event.location).includes(searchTerm);
+        const inDescription = t(event.description).includes(searchTerm);
+
+        const inDietary =
+          Array.isArray(event.dietary_options) &&
+          event.dietary_options.some((opt) => t(opt).includes(searchTerm));
+
+        const inFoodItems =
+          Array.isArray(event.food_items) &&
+          event.food_items.some(
+            (f) =>
+              t(f.item).includes(searchTerm) || t(f.qty).includes(searchTerm)
+          );
+
+        return (
+          inTitle || inLocation || inDescription || inDietary || inFoodItems
+        );
+      });
+    }
+
+    // Return empty list if no matches
+    if (events.length === 0) {
+      return res.status(200).json({ events: [] });
+    }
+
+    // ✅ Mark reserved events if user logged in
     if (user_id) {
       const { data: reservations } = await supabase
         .from("event_attendees")
@@ -102,13 +144,10 @@ export const getAllEvents = async (req, res) => {
         .eq("user_id", user_id);
 
       const reservedIds = reservations?.map((r) => r.event_id) || [];
-
-      const eventsWithStatus = events.map((event) => ({
-        ...event,
-        isReserved: reservedIds.includes(event.id),
+      events = events.map((e) => ({
+        ...e,
+        isReserved: reservedIds.includes(e.id),
       }));
-
-      return res.status(200).json({ events: eventsWithStatus });
     }
 
     res.status(200).json({ events });
