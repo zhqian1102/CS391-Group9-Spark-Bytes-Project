@@ -6,6 +6,7 @@ import NavigationBar from "../../components/NavigationBar";
 import Footer from "../../components/Footer";
 import "./EventsPage.css";
 import supabase, { APP_API_URL } from "../../config/supabase.js";
+import { useLocation } from "react-router-dom";
 
 const API_URL = APP_API_URL;
 // console.log("API_URL:", API_URL);
@@ -25,6 +26,8 @@ const EventsPage = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const location = useLocation();
+
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!user) {
@@ -41,8 +44,14 @@ const EventsPage = () => {
         } = await supabase.auth.getSession();
 
         const token = session?.access_token;
+        const params = new URLSearchParams(location.search);
+        const search = params.get("search") || "";
 
-        const res = await fetch(`${API_URL}/api/events`, {
+        const endpoint = `${API_URL}/api/events${
+          search ? `?search=${encodeURIComponent(search)}` : ""
+        }`;
+
+        const res = await fetch(endpoint, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -59,7 +68,7 @@ const EventsPage = () => {
     };
 
     fetchEvents();
-  }, []);
+  }, [location.search]);
 
   const handleClearFilters = () => {
     setDateFilter("");
@@ -87,7 +96,7 @@ const EventsPage = () => {
     handleCloseModal();
   };
 
-  // search and filter
+  //filter
   const filteredEvents = events.filter((event) => {
     const matchesSearch =
       searchQuery === "" ||
@@ -132,14 +141,6 @@ const EventsPage = () => {
           <button className="create-post-btn" onClick={() => navigate("/post")}>
             Create a Post
           </button>
-          {/* {user?.userType === "organizer" && (
-            <button
-              className="create-post-btn"
-              onClick={() => navigate("/post")}
-            >
-              Create a Post
-            </button>
-          )} */}
         </div>
 
         {/* Filters Section */}
