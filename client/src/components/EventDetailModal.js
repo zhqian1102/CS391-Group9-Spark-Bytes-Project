@@ -64,7 +64,9 @@ const EventDetailModal = ({ event, open, onClose, onReserve }) => {
 
   if (!open || !event) return null;
 
-  const servingCapacity = event.totalSpots;
+  const totalSpots = event.capacity || 0;
+  const attendees = event.attendees_count || 0;
+  const spotsLeft = Math.max(totalSpots - attendees, 0);
 
   return (
     <>
@@ -91,7 +93,7 @@ const EventDetailModal = ({ event, open, onClose, onReserve }) => {
               />
             )}
             <div className="modal-spots-badge">
-              {event.spotsLeft} Spots Left
+              {spotsLeft > 0 ? `${spotsLeft} Spots Left` : "Event Full"}
             </div>
           </div>
 
@@ -166,7 +168,7 @@ const EventDetailModal = ({ event, open, onClose, onReserve }) => {
 
               {/* Serving capacity */}
               <div className="modal-serving-info">
-                <strong>Serving Capacity: {servingCapacity}</strong>
+                <strong>Serving Capacity: {totalSpots}</strong>
               </div>
 
               {/* Food items list */}

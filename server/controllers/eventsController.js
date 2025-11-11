@@ -3,19 +3,8 @@ import supabase from "../config/supabase.js";
 // Create an event
 export const createEvent = async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    const token = authHeader && authHeader.split(" ")[1];
-    if (!token) return res.status(401).json({ error: "No token provided" });
-
-    // Verify and get user info
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser(token);
-    if (authError || !user)
-      return res.status(401).json({ error: "Invalid user" });
-
-    const user_id = user.id;
+    const user_id = req.user?.id;
+    if (!user_id) return res.status(401).json({ error: "Unauthorized" });
 
     const {
       title,
@@ -54,6 +43,7 @@ export const createEvent = async (req, res) => {
           date,
           time,
           capacity,
+          attendees_count: 0,
           food_items,
           dietary_options,
           pickup_instructions,
@@ -77,22 +67,9 @@ export const createEvent = async (req, res) => {
 // Fetch all available events
 export const getAllEvents = async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    const token = authHeader && authHeader.split(" ")[1];
-    let user_id = null;
-
-    if (token) {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser(token);
-      if (user) user_id = user.id;
-    }
-
-    // Get ?search= from query
     const rawTerm = req.query.search || "";
     const searchTerm = rawTerm.toLowerCase().trim();
 
-    // Always fetch all events first
     const { data: allEvents, error } = await supabase
       .from("events")
       .select("*")
@@ -105,7 +82,7 @@ export const getAllEvents = async (req, res) => {
 
     let events = allEvents || [];
 
-    // ✅ Partial match filtering
+    // local search filtering
     if (searchTerm) {
       events = events.filter((event) => {
         const t = (val) => (val ? val.toString().toLowerCase() : "");
@@ -130,26 +107,6 @@ export const getAllEvents = async (req, res) => {
         );
       });
     }
-
-    // Return empty list if no matches
-    if (events.length === 0) {
-      return res.status(200).json({ events: [] });
-    }
-
-    // ✅ Mark reserved events if user logged in
-    if (user_id) {
-      const { data: reservations } = await supabase
-        .from("event_attendees")
-        .select("event_id")
-        .eq("user_id", user_id);
-
-      const reservedIds = reservations?.map((r) => r.event_id) || [];
-      events = events.map((e) => ({
-        ...e,
-        isReserved: reservedIds.includes(e.id),
-      }));
-    }
-
     res.status(200).json({ events });
   } catch (error) {
     console.error("Error fetching events:", error);
@@ -157,34 +114,28 @@ export const getAllEvents = async (req, res) => {
   }
 };
 
-// Fetch all events created or reserved by user
+// get user's posted and reserved events
 export const getEventsByUserId = async (req, res) => {
   const { userId } = req.params;
 
   try {
-    // User's posted events
     const { data: postedEvents, error: postError } = await supabase
       .from("events")
       .select("*")
       .eq("user_id", userId);
-
     if (postError) throw postError;
 
-    // User's reserved events
     const { data: reserved, error: reservedError } = await supabase
       .from("event_attendees")
       .select("event_id")
       .eq("user_id", userId);
-
     if (reservedError) throw reservedError;
 
     const reservedIds = reserved.map((r) => r.event_id);
-
     const { data: reservedEvents, error: fetchReservedError } = await supabase
       .from("events")
       .select("*")
       .in("id", reservedIds);
-
     if (fetchReservedError) throw fetchReservedError;
 
     return res.status(200).json({
@@ -200,64 +151,50 @@ export const getEventsByUserId = async (req, res) => {
 // Reserve an event
 export const reserveEvent = async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    const token = authHeader && authHeader.split(" ")[1];
-    if (!token) return res.status(401).json({ error: "No token provided" });
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser(token);
-    if (authError || !user)
-      return res.status(401).json({ error: "Invalid user" });
-
-    const user_id = user.id;
+    const user_id = req.user?.id;
     const { eventId } = req.params;
 
-    // Check if event exists
     const { data: eventData, error: eventError } = await supabase
       .from("events")
       .select("*")
       .eq("id", eventId)
       .single();
     if (eventError || !eventData)
-      return res.status(404).json({ error: "Event not found." });
+      return res.status(404).json({ error: "Event not found" });
 
-    // Check capacity vs current reservations
-    const { count, error: countError } = await supabase
+    const spotsLeft = eventData.capacity - eventData.attendees_count;
+    if (spotsLeft <= 0) return res.status(400).json({ error: "Event is full" });
+
+    //avoid duplicate
+    const { data: existing } = await supabase
       .from("event_attendees")
-      .select("*", { count: "exact", head: true })
-      .eq("event_id", eventId);
-
-    if (countError) throw countError;
-
-    if (count >= eventData.capacity) {
-      return res.status(400).json({ error: "Event is full." });
-    }
-
-    // Check if user already reserved
-    const { data: existing, error: existingError } = await supabase
-      .from("event_attendees")
-      .select("*")
+      .select("id")
       .eq("event_id", eventId)
       .eq("user_id", user_id)
       .maybeSingle();
 
-    if (existing) {
-      return res.status(400).json({ error: "Already reserved this event." });
-    }
+    if (existing)
+      return res.status(400).json({ error: "Already reserved this event" });
 
-    //Insert reservation
-    const { data, error } = await supabase
+    const { error: insertError } = await supabase
       .from("event_attendees")
-      .insert([{ event_id: eventId, user_id }])
-      .select();
+      .insert([{ event_id: eventId, user_id }]);
+    if (insertError) throw insertError;
 
-    if (error) throw error;
+    const newCount = eventData.attendees_count + 1;
+    const { data: updatedEvent, error: updateError } = await supabase
+      .from("events")
+      .update({ attendees_count: newCount })
+      .eq("id", eventId)
+      .select("attendees_count, capacity")
+      .single();
+    if (updateError) throw updateError;
 
-    return res.status(201).json({
+    const spotsRemaining = updatedEvent.capacity - updatedEvent.attendees_count;
+
+    return res.status(200).json({
       message: "Reservation successful!",
-      reservation: data[0],
+      spotsLeft: spotsRemaining,
     });
   } catch (error) {
     console.error("Error reserving event:", error);
@@ -268,31 +205,41 @@ export const reserveEvent = async (req, res) => {
 // Cancel a reservation
 export const cancelReservation = async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    const token = authHeader && authHeader.split(" ")[1];
-    if (!token) return res.status(401).json({ error: "No token provided" });
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser(token);
-    if (authError || !user)
-      return res.status(401).json({ error: "Invalid user" });
-
-    const user_id = user.id;
+    const user_id = req.user?.id;
     const { eventId } = req.params;
 
-    const { error } = await supabase
+    // Delete reservation
+    const { error: deleteError } = await supabase
       .from("event_attendees")
       .delete()
       .eq("event_id", eventId)
       .eq("user_id", user_id);
+    if (deleteError) throw deleteError;
 
-    if (error) throw error;
+    // Increment capacity
+    const { data: eventData, error: eventError } = await supabase
+      .from("events")
+      .select("capacity")
+      .eq("id", eventId)
+      .single();
+    if (eventError || !eventData)
+      return res.status(404).json({ error: "Event not found" });
 
-    return res
-      .status(200)
-      .json({ message: "Reservation cancelled successfully." });
+    const newCount = Math.max(eventData.attendees_count - 1, 0);
+    const { data: updatedEvent, error: updateError } = await supabase
+      .from("events")
+      .update({ attendees_count: newCount })
+      .eq("id", eventId)
+      .select("attendees_count, capacity")
+      .single();
+    if (updateError) throw updateError;
+
+    const spotsRemaining = updatedEvent.capacity - updatedEvent.attendees_count;
+
+    return res.status(200).json({
+      message: "Reservation cancelled successfully",
+      spotsLeft: spotsRemaining,
+    });
   } catch (error) {
     console.error("Error cancelling reservation:", error);
     res.status(500).json({ error: "Failed to cancel reservation." });

@@ -111,26 +111,32 @@ const EventsPage = () => {
         },
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to reserve event");
+        throw new Error(data.error || "Failed to reserve event");
       }
 
-      const data = await res.json();
-      console.log("Reservation successful:", data);
-
-      // Update the event in local state to mark it as reserved
+      // Update local event state (capacity - 1)
       setEvents((prevEvents) =>
         prevEvents.map((event) =>
           event.id === eventId
-            ? { ...event, isReserved: true, capacity: event.capacity - 1 }
+            ? {
+                ...event,
+                isReserved: true,
+                attendees_count: (event.attendees_count || 0) + 1, // fallback if backend didn't send spotsLeft
+              }
             : event
         )
       );
 
-      // Update selected event if it's open in modal
+      // If modal is open, update selected event too
       if (selectedEvent?.id === eventId) {
-        setSelectedEvent((prev) => ({ ...prev, isReserved: true }));
+        setSelectedEvent((prev) => ({
+          ...prev,
+          isReserved: true,
+          attendees_count: (prev.attendees_count || 0) + 1,
+        }));
       }
 
       alert("Reservation confirmed!");
@@ -324,8 +330,11 @@ const EventsPage = () => {
                       <div className="event-header">
                         <h3 className="event-title">{event.title}</h3>
                         <span className="spots-badge">
-                          {event.capacity
-                            ? `${event.capacity} Spots`
+                          {event.capacity && event.attendees_count !== undefined
+                            ? `${Math.max(
+                                event.capacity - event.attendees_count,
+                                0
+                              )} Spots Left`
                             : "Spots Available"}
                         </span>
                       </div>
@@ -377,7 +386,7 @@ const EventsPage = () => {
                               : {}
                           }
                         >
-                          {event.isReserved ? "Reserved ✓" : "View Detail"}
+                          {event.isReserved ? "Reserved" : "View Detail"}
                         </button>
                       </div>
                     </div>
