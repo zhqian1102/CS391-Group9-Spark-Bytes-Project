@@ -12,11 +12,12 @@ const UserProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [profileImage, setProfileImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: '',
     dietaryPreferences: []
   });
 
@@ -29,9 +30,10 @@ const UserProfile = () => {
       setFormData({
         name: user.name || '',
         email: user.email || '',
-        phone: user.phone || '',
         dietaryPreferences: user.dietaryPreferences || []
       });
+      // Load profile picture if exists
+      setImagePreview(user.profilePicture || null);
     }
   }, [user, navigate]);
 
@@ -52,22 +54,61 @@ const UserProfile = () => {
     }));
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setMessage({ type: 'error', text: 'Image must be less than 5MB' });
+        return;
+      }
+
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        setMessage({ type: 'error', text: 'Please select an image file' });
+        return;
+      }
+
+      setProfileImage(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setProfileImage(null);
+    setImagePreview(null);
+  };
+
   const handleSave = async () => {
     setLoading(true);
     setMessage({ type: '', text: '' });
 
     try {
+      // If there's a new image, convert to base64 for storage
+      let profilePictureData = imagePreview;
+      
       const result = await updateProfile({
         name: formData.name,
-        phone: formData.phone,
-        dietaryPreferences: formData.dietaryPreferences
+        dietaryPreferences: formData.dietaryPreferences,
+        profilePicture: profilePictureData
       });
 
       if (result.success) {
         setMessage({ type: 'success', text: 'Profile updated successfully!' });
         setIsEditing(false);
+        
+        // Clear message after 3 seconds
+        setTimeout(() => {
+          setMessage({ type: '', text: '' });
+        }, 3000);
       } else {
-        setMessage({ type: 'error', text: result.error });
+        setMessage({ type: 'error', text: result.error || 'Failed to update profile' });
       }
     } catch (error) {
       setMessage({ type: 'error', text: 'Failed to update profile' });
@@ -81,11 +122,23 @@ const UserProfile = () => {
     setFormData({
       name: user.name || '',
       email: user.email || '',
-      phone: user.phone || '',
       dietaryPreferences: user.dietaryPreferences || []
     });
+    setImagePreview(user.profilePicture || null);
+    setProfileImage(null);
     setIsEditing(false);
     setMessage({ type: '', text: '' });
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
+
+  const handleDeleteAccount = () => {
+    if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+      alert('Account deletion feature will be implemented soon.');
+    }
   };
 
   const dietaryOptions = [
@@ -98,6 +151,16 @@ const UserProfile = () => {
     'Nut-Free',
     'Other'
   ];
+
+  // Get user initials for default avatar
+  const getInitials = () => {
+    if (!user.name) return '?';
+    const names = user.name.split(' ');
+    if (names.length >= 2) {
+      return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+    }
+    return user.name.substring(0, 2).toUpperCase();
+  };
 
   if (!user) {
     return null;
@@ -127,12 +190,54 @@ const UserProfile = () => {
         )}
 
         <div className="profile-content-grid">
-          {/* Basic Information Card */}
+          {/* Profile Picture & Basic Info Card */}
           <div className="profile-card">
             <h2 className="card-title">
               <span className="card-icon">👤</span>
               Basic Information
             </h2>
+
+            {/* Profile Picture Section */}
+            <div className="profile-picture-section">
+              <div className="profile-picture-container">
+                {imagePreview ? (
+                  <img 
+                    src={imagePreview} 
+                    alt="Profile" 
+                    className="profile-picture"
+                  />
+                ) : (
+                  <div className="profile-picture-placeholder">
+                    {getInitials()}
+                  </div>
+                )}
+              </div>
+              
+              {isEditing && (
+                <div className="profile-picture-controls">
+                  <label htmlFor="profile-image-upload" className="upload-btn">
+                    📷 {imagePreview ? 'Change Photo' : 'Upload Photo'}
+                  </label>
+                  <input
+                    id="profile-image-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    style={{ display: 'none' }}
+                  />
+                  {imagePreview && (
+                    <button 
+                      type="button"
+                      className="remove-photo-btn"
+                      onClick={handleRemoveImage}
+                    >
+                      Remove
+                    </button>
+                  )}
+                  <p className="upload-hint">Max 5MB, JPG/PNG</p>
+                </div>
+              )}
+            </div>
             
             <div className="form-group">
               <label>Full Name</label>
@@ -159,19 +264,6 @@ const UserProfile = () => {
             </div>
 
             <div className="form-group">
-              <label>Phone Number (Optional)</label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleInputChange}
-                disabled={!isEditing}
-                placeholder="+1 (XXX) XXX-XXXX"
-                className="profile-input"
-              />
-            </div>
-
-            <div className="form-group">
               <label>Account Type</label>
               <div className="account-type-badge">
                 {user.userType === 'organizer' ? '📋 Event Organizer' : '👨‍🎓 Student'}
@@ -185,6 +277,10 @@ const UserProfile = () => {
               <span className="card-icon">🍽️</span>
               Dietary Preferences
             </h2>
+            
+            <p style={{ color: '#666', fontSize: '14px', marginBottom: '20px' }}>
+              Select your dietary preferences to get personalized event recommendations
+            </p>
             
             <div className="dietary-grid">
               {dietaryOptions.map(option => (
@@ -213,7 +309,7 @@ const UserProfile = () => {
             <div className="account-actions">
               <button 
                 className="action-btn logout-btn"
-                onClick={logout}
+                onClick={handleLogout}
               >
                 <span>🚪</span>
                 Logout
@@ -221,11 +317,7 @@ const UserProfile = () => {
               
               <button 
                 className="action-btn danger-btn"
-                onClick={() => {
-                  if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-                    alert('Account deletion would be implemented here');
-                  }
-                }}
+                onClick={handleDeleteAccount}
               >
                 <span>⚠️</span>
                 Delete Account
