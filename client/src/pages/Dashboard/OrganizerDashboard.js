@@ -72,8 +72,13 @@ const OrganizerDashboard = () => {
     },
   ]);
 
+  const [isOrganizerView, setIsOrganizerView] = useState(true);
+
   const handleToggleView = () => {
-    navigate("/userdashboard");
+    setIsOrganizerView(!isOrganizerView);
+    setTimeout(() => {
+      navigate("/userdashboard");
+    }, 300);
   };
 
   return (
@@ -94,16 +99,16 @@ const OrganizerDashboard = () => {
             <div className="section-header-left">
               <h3>My Events</h3>
               <div className="view-toggle-container">
-                <span className="toggle-label">User</span>
+                <span className="toggle-label">My Reservations</span>
                 <label className="toggle-switch">
                   <input
                     type="checkbox"
-                    checked={true}
+                    checked={isOrganizerView}
                     onChange={handleToggleView}
                   />
                   <span className="slider"></span>
                 </label>
-                <span className="toggle-label">Organizer</span>
+                <span className="toggle-label">My Events</span>
               </div>
             </div>
             <button

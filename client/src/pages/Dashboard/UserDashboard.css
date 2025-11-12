@@ -14,10 +14,13 @@
   max-width: 100%;
   margin: 0 auto;
   width: 100%;
+  padding-left: 3rem;
 }
 
 .welcome-section {
-  margin-bottom: 2rem;
+  margin-bottom: 0rem;
+  margin-top: 0;
+  margin-left: 0;
 }
 
 .dashboard-welcome-title {
@@ -31,6 +34,8 @@
 .reserved-events-section {
   border-radius: 12px;
   padding: 2rem;
+  margin-top: 1rem;
+  padding-left: 0;
 }
 
 .section-header {
@@ -68,7 +73,7 @@
   font-size: 0.9rem;
   font-weight: 500;
   color: #666;
-  transition: color 0.3s;
+  transition: color 0.3s ease;
 }
 
 /* Toggle Switch */
@@ -77,7 +82,6 @@
   display: inline-block;
   width: 52px;
   height: 28px;
-  cursor: pointer;
 }
 
 .toggle-switch input {
@@ -88,13 +92,11 @@
 
 .slider {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background-color: #ccc;
-  transition: 0.3s;
+  transition: background-color 0.3s ease;
   border-radius: 28px;
+  cursor: pointer;
 }
 
 .slider:before {
@@ -104,10 +106,12 @@
   width: 22px;
   left: 3px;
   bottom: 3px;
-  background-color: white;
-  transition: 0.3s;
+  background: #fff;
   border-radius: 50%;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transform: translateX(0);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
 }
 
 input:checked + .slider {
@@ -119,7 +123,7 @@ input:checked + .slider:before {
 }
 
 input:focus + .slider {
-  box-shadow: 0 0 1px #cc0000;
+  box-shadow: 0 0 2px #cc0000;
 }
 
 /* Active label styling */

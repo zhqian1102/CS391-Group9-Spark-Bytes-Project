@@ -24,10 +24,12 @@ const UserDashboard = () => {
   const [reservedEvents, setReservedEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [isOrganizerView, setIsOrganizerView] = useState(false);
+
   useEffect(() => {
     const fetchReservedEvents = async () => {
       if (!user?.id) return;
-      
+
       try {
         const {
           data: { session },
@@ -73,7 +75,7 @@ const UserDashboard = () => {
   /* Cancel event state */
   const handleCancel = async (eventId) => {
     if (!window.confirm("Confirm cancellation?")) return;
-    
+
     try {
       const {
         data: { session },
@@ -82,7 +84,7 @@ const UserDashboard = () => {
       const token = session?.access_token;
 
       const res = await fetch(`${API_URL}/api/events/${eventId}/reserve`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -90,23 +92,26 @@ const UserDashboard = () => {
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to cancel reservation');
+        throw new Error(errorData.error || "Failed to cancel reservation");
       }
 
       alert(`Cancelled reservation successfully`);
-      
+
       // Remove the cancelled event from the list
-      setReservedEvents(prevEvents => 
-        prevEvents.filter(event => event.id !== eventId)
+      setReservedEvents((prevEvents) =>
+        prevEvents.filter((event) => event.id !== eventId)
       );
     } catch (error) {
-      console.error('Error cancelling reservation:', error);
-      alert(error.message || 'Failed to cancel reservation');
+      console.error("Error cancelling reservation:", error);
+      alert(error.message || "Failed to cancel reservation");
     }
   };
 
   const handleToggleView = () => {
-    navigate("/organizerdashboard");
+    setIsOrganizerView(!isOrganizerView);
+    setTimeout(() => {
+      navigate("/organizerdashboard");
+    }, 200);
   };
 
   return (
@@ -125,18 +130,18 @@ const UserDashboard = () => {
         <section className="reserved-events-section">
           <div className="section-header">
             <div className="section-header-left">
-              <h3>My Reserved Events</h3>
+              <h3>My Reservations</h3>
               <div className="view-toggle-container">
-                <span className="toggle-label">User</span>
+                <span className="toggle-label">My Reservations</span>
                 <label className="toggle-switch">
                   <input
                     type="checkbox"
-                    checked={false}
+                    checked={isOrganizerView}
                     onChange={handleToggleView}
                   />
                   <span className="slider"></span>
                 </label>
-                <span className="toggle-label">Organizer</span>
+                <span className="toggle-label">My Events</span>
               </div>
             </div>
             <button
@@ -151,17 +156,17 @@ const UserDashboard = () => {
           {loading ? (
             <p>Loading your reserved events...</p>
           ) : reservedEvents.length === 0 ? (
-            <p style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
-              You haven't reserved any events yet.{' '}
-              <button 
-                onClick={() => navigate('/events')}
-                style={{ 
-                  background: 'none', 
-                  border: 'none', 
-                  color: '#2c5258', 
-                  textDecoration: 'underline',
-                  cursor: 'pointer',
-                  fontSize: 'inherit'
+            <p style={{ textAlign: "center", padding: "2rem", color: "#666" }}>
+              You haven't reserved any events yet.{" "}
+              <button
+                onClick={() => navigate("/events")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#2c5258",
+                  textDecoration: "underline",
+                  cursor: "pointer",
+                  fontSize: "inherit",
                 }}
               >
                 Browse available events
@@ -174,7 +179,10 @@ const UserDashboard = () => {
                   {/* Image */}
                   <div className="event-image-container">
                     <img
-                      src={event.image_urls?.[0] || "https://placehold.co/600x400?text=No+Image"}
+                      src={
+                        event.image_urls?.[0] ||
+                        "https://placehold.co/600x400?text=No+Image"
+                      }
                       alt={event.title}
                       className="event-image"
                     />
@@ -254,12 +262,13 @@ const UserDashboard = () => {
             image: selectedEvent.image_urls?.[0],
             tags: selectedEvent.dietary_options || [],
             dietaryTags: selectedEvent.dietary_options || [],
-            foodItems: selectedEvent.food_items?.map(f => ({
-              name: f.item,
-              quantity: f.qty,
-              unit: 'servings'
-            })) || [],
-            pickupInstructions: selectedEvent.pickup_instructions
+            foodItems:
+              selectedEvent.food_items?.map((f) => ({
+                name: f.item,
+                quantity: f.qty,
+                unit: "servings",
+              })) || [],
+            pickupInstructions: selectedEvent.pickup_instructions,
           }}
           open={showModal}
           onClose={handleCloseModal}
