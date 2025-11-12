@@ -120,11 +120,10 @@ const UserDashboard = () => {
       <NavigationBar />
       {/* Main Content */}
       <main className="userdashboard-main">
-        <div className="welcome-section">
           <h2 className="dashboard-welcome-title">
             Welcome back, {user?.name || "Tester"}!
           </h2>
-        </div>
+
 
         {/* Reserved Events Section */}
         <section className="reserved-events-section">

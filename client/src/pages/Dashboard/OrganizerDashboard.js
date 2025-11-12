@@ -87,11 +87,9 @@ const OrganizerDashboard = () => {
       <NavigationBar />
       {/* Main Content */}
       <main className="organizerdashboard-main">
-        <div className="welcome-section">
           <h2 className="dashboard-welcome-title">
             Welcome back, {user?.name || "Tester"}!
           </h2>
-        </div>
 
         {/* Reserved Events Section */}
         <section className="posted-events-section">
