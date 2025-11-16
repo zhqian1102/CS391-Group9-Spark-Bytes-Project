@@ -5,6 +5,15 @@ const EventDetailModal = ({ event, open, onClose, onReserve }) => {
   const dialogRef = useRef(null);
   const [isReserving, setIsReserving] = useState(false);
 
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const images = event?.image_urls || (event?.image ? [event.image] : []);
+  const hasMultipleImages = images.length > 1;
+
+  // Reset image index when modal opens or event changes
+  useEffect(() => {
+    setCurrentImageIndex(0);
+  }, [open, event?.id]);
+
   // ESC to close
   useEffect(() => {
     if (!open) return;
@@ -40,6 +49,14 @@ const EventDetailModal = ({ event, open, onClose, onReserve }) => {
     } finally {
       setIsReserving(false);
     }
+  };
+
+  const handlePrevImage = () => {
+    setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
+
+  const handleNextImage = () => {
+    setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
   };
 
   // Helper function to format date with proper weekday
@@ -85,12 +102,63 @@ const EventDetailModal = ({ event, open, onClose, onReserve }) => {
         >
           {/* Header with image and spots badge */}
           <div className="modal-header">
-            {event.image && (
-              <img
-                src={event.image}
-                alt={event.title || "Event image"}
-                loading="lazy"
-              />
+            {images.length > 0 && (
+              <div className="modal-image-carousel">
+                <img
+                  src={images[currentImageIndex]}
+                  alt={`${event.title || "Event"} - Image ${
+                    currentImageIndex + 1
+                  }`}
+                  loading="lazy"
+                  className="modal-carousel-image"
+                />
+
+                {/* Navigation arrows - only show if multiple images */}
+                {hasMultipleImages && (
+                  <>
+                    <button
+                      type="button"
+                      className="modal-carousel-btn modal-carousel-btn-prev"
+                      onClick={handlePrevImage}
+                      aria-label="Previous image"
+                    >
+                      ‹
+                    </button>
+                    <button
+                      type="button"
+                      className="modal-carousel-btn modal-carousel-btn-next"
+                      onClick={handleNextImage}
+                      aria-label="Next image"
+                    >
+                      ›
+                    </button>
+                  </>
+                )}
+
+                {/* Image indicators */}
+                {hasMultipleImages && (
+                  <div className="modal-carousel-indicators">
+                    {images.map((_, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        className={`modal-carousel-dot ${
+                          index === currentImageIndex ? "active" : ""
+                        }`}
+                        onClick={() => setCurrentImageIndex(index)}
+                        aria-label={`Go to image ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* Image counter */}
+                {hasMultipleImages && (
+                  <div className="modal-image-counter">
+                    {currentImageIndex + 1} / {images.length}
+                  </div>
+                )}
+              </div>
             )}
             <div className="modal-spots-badge">
               {spotsLeft > 0 ? `${spotsLeft} Spots Left` : "Event Full"}

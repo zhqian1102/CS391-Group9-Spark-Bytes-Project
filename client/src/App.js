@@ -9,6 +9,7 @@ import PostEvent from "./pages/PostEvent/PostEvent";
 import NotificationPage from "./components/NotificationPage";
 import AboutPage from "./pages/About/AboutPage";
 import UserProfile from "./pages/UserProfile/UserProfile";
+import EditEventPage from "./pages/EditEvent/EditEvent";
 import "./App.css";
 
 function App() {
@@ -22,10 +23,14 @@ function App() {
             <Route path="/events" element={<EventsPage />} />
             <Route path="/post" element={<PostEvent />} />
             <Route path="/userdashboard" element={<UserDashboard />} />
-            <Route path="/organizerdashboard" element={<OrganizerDashboard />} />
+            <Route
+              path="/organizerdashboard"
+              element={<OrganizerDashboard />}
+            />
             <Route path="/notifications" element={<NotificationPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/profile" element={<UserProfile />} />
+            <Route path="/editevent/:id" element={<EditEventPage />} />
           </Routes>
         </div>
       </Router>

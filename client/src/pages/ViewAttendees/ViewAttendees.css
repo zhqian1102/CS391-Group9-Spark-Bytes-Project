@@ -1,0 +1,206 @@
+.view-attendees-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f8f9fa;
+}
+
+.attendees-main-content {
+  flex: 1;
+  max-width: 1200px;
+  width: 100%;
+  margin: 2rem auto;
+  padding: 0 2rem;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.attendees-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.attendees-title {
+  font-size: 2rem;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.attendees-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.back-button {
+  padding: 0.75rem 1.5rem;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.back-button:hover {
+  background-color: #5a6268;
+}
+
+.export-button {
+  padding: 0.75rem 1.5rem;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.export-button:hover {
+  background-color: #218838;
+}
+
+.attendees-stats {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: white;
+  padding: 1.5rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  min-width: 200px;
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #007bff;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  font-size: 1rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.attendees-list-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.no-attendees {
+  padding: 4rem 2rem;
+  text-align: center;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.attendees-table-wrapper {
+  overflow-x: auto;
+}
+
+.attendees-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.attendees-table thead {
+  background-color: #007bff;
+  color: white;
+}
+
+.attendees-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  letter-spacing: 0.5px;
+}
+
+.attendees-table tbody tr {
+  border-bottom: 1px solid #e9ecef;
+  transition: background-color 0.2s;
+}
+
+.attendees-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.attendees-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.attendees-table td {
+  padding: 1rem;
+  color: #495057;
+}
+
+.attendees-table td:first-child {
+  font-weight: 600;
+  color: #007bff;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .attendees-main-content {
+    padding: 0 1rem;
+  }
+
+  .attendees-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .attendees-title {
+    font-size: 1.5rem;
+  }
+
+  .attendees-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .back-button,
+  .export-button {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .attendees-table {
+    font-size: 0.875rem;
+  }
+
+  .attendees-table th,
+  .attendees-table td {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .stat-card {
+    min-width: 150px;
+  }
+
+  .stat-number {
+    font-size: 2rem;
+  }
+}

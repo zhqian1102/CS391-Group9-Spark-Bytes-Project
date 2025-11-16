@@ -338,3 +338,131 @@
 .modal-body::-webkit-scrollbar-thumb:hover {
   background: #a0a0a0;
 }
+
+/* Image Carousel */
+.modal-image-carousel {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.modal-carousel-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Carousel Navigation Buttons */
+.modal-carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  line-height: 1;
+  padding: 0;
+}
+
+.modal-carousel-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.modal-carousel-btn-prev {
+  left: 16px;
+}
+
+.modal-carousel-btn-next {
+  right: 16px;
+}
+
+/* Carousel Indicators (Dots) */
+.modal-carousel-indicators {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 2;
+}
+
+.modal-carousel-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid white;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.3s;
+  padding: 0;
+}
+
+.modal-carousel-dot:hover {
+  background: rgba(255, 255, 255, 0.8);
+  transform: scale(1.2);
+}
+
+.modal-carousel-dot.active {
+  background: white;
+  transform: scale(1.2);
+}
+
+/* Image Counter */
+.modal-image-counter {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  z-index: 2;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .modal-carousel-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 24px;
+  }
+
+  .modal-carousel-btn-prev {
+    left: 8px;
+  }
+
+  .modal-carousel-btn-next {
+    right: 8px;
+  }
+
+  .modal-carousel-indicators {
+    bottom: 12px;
+  }
+
+  .modal-carousel-dot {
+    width: 8px;
+    height: 8px;
+  }
+
+  .modal-image-counter {
+    top: 12px;
+    right: 12px;
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+}

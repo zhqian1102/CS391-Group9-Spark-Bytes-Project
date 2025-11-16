@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import NavigationBar from "../../components/NavigationBar";
 import Footer from "../../components/Footer";
 import "./PostEvent.css";
@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import supabase, { APP_API_URL } from "../../config/supabase.js";
 
 const API_URL = APP_API_URL;
+const MAX_IMAGES = 5;
 
 export default function PostEvent() {
   const [title, setTitle] = useState("");
@@ -17,9 +18,16 @@ export default function PostEvent() {
   const [description, setDescription] = useState("");
   const [foodList, setFoodList] = useState([{ item: "", qty: "" }]);
   const [selectedDietary, setSelectedDietary] = useState([]);
-  const [images, setImages] = useState([]);
+  const [imageFiles, setImageFiles] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    return () => {
+      imagePreviews.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [imagePreviews]);
 
   const handleAdd = () => setFoodList([...foodList, { item: "", qty: "" }]);
 
@@ -36,20 +44,48 @@ export default function PostEvent() {
   };
 
   const handleImageChange = (e) => {
-  const files = Array.from(e.target.files);
-  if (files.length > 5) {
-    alert("Up to 5 images.");
-    e.target.value = null; 
-    return;
-  }
-  setImages(files);
-};
+    const files = Array.from(e.target.files);
+    const remainingSlots = MAX_IMAGES - imagePreviews.length;
+
+    if (files.length > remainingSlots) {
+      alert(
+        `You can only upload ${remainingSlots} more image(s). Maximum is ${MAX_IMAGES} images total.`
+      );
+      return;
+    }
+
+    const validFiles = files.filter((file) => {
+      if (!file.type.startsWith("image/")) {
+        alert(`${file.name} is not an image file`);
+        return false;
+      }
+      return true;
+    });
+
+    if (validFiles.length === 0) return;
+
+    const newPreviews = validFiles.map((file) => URL.createObjectURL(file));
+
+    setImageFiles((prev) => [...prev, ...validFiles]);
+    setImagePreviews((prev) => [...prev, ...newPreviews]);
+
+    e.target.value = "";
+  };
+
+  const handleRemoveImage = (index) => {
+    URL.revokeObjectURL(imagePreviews[index]);
+
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const uploadImagesToSupabase = async (files) => {
     const uploadedUrls = [];
 
     for (const file of files) {
-      const fileName = `${Date.now()}_${file.name}`;
+      const fileName = `${Date.now()}_${Math.random()
+        .toString(36)
+        .substr(2, 9)}_${file.name}`;
       const { data, error } = await supabase.storage
         .from("event_images")
         .upload(fileName, file);
@@ -88,8 +124,8 @@ export default function PostEvent() {
       const token = session.access_token;
 
       let imageUrls = [];
-      if (images.length > 0) {
-        imageUrls = await uploadImagesToSupabase(images);
+      if (imageFiles.length > 0) {
+        imageUrls = await uploadImagesToSupabase(imageFiles);
       }
 
       // event data
@@ -275,30 +311,54 @@ export default function PostEvent() {
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Upload Event Images *</label>
-            </div>
-          </div>
+          <div className="form-group">
+            <label>Event Images * (Max {MAX_IMAGES})</label>
 
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={handleImageChange}
-            required
-          />
-          <div className="image-preview">
-              {images.length > 0 &&
-                images.map((img, idx) => (
+            <div className="image-grid">
+              {imagePreviews.map((preview, index) => (
+                <div key={index} className="image-container">
                   <img
-                    key={idx}
-                    src={URL.createObjectURL(img)}
-                    alt={`preview-${idx}`}
-                    className="preview-img"
+                    src={preview}
+                    alt={`Preview ${index + 1}`}
+                    className="image-preview"
                   />
-                ))}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(index)}
+                    className="remove-image-btn"
+                    title="Remove image"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
             </div>
+
+            {imagePreviews.length < MAX_IMAGES && (
+              <div>
+                <input
+                  type="file"
+                  id="image-upload"
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="image-upload-input"
+                />
+                <label htmlFor="image-upload" className="image-upload-label">
+                  📷 Add Images ({imagePreviews.length}/{MAX_IMAGES})
+                </label>
+                <p className="image-upload-hint">
+                  You can select multiple images at once
+                </p>
+              </div>
+            )}
+
+            {imagePreviews.length >= MAX_IMAGES && (
+              <p className="max-images-warning">
+                Maximum number of images reached
+              </p>
+            )}
+          </div>
 
           <div className="form-group">
             <label>Pickup Instructions</label>

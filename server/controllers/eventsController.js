@@ -154,47 +154,56 @@ export const reserveEvent = async (req, res) => {
     const user_id = req.user?.id;
     const { eventId } = req.params;
 
-    const { data: eventData, error: eventError } = await supabase
+    if (!user_id) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const { data: event, error: eventError } = await supabase
       .from("events")
-      .select("*")
+      .select("capacity, attendees_count")
       .eq("id", eventId)
       .single();
-    if (eventError || !eventData)
+
+    if (eventError || !event) {
       return res.status(404).json({ error: "Event not found" });
+    }
 
-    const spotsLeft = eventData.capacity - eventData.attendees_count;
-    if (spotsLeft <= 0) return res.status(400).json({ error: "Event is full" });
+    if (event.attendees_count >= event.capacity) {
+      return res.status(400).json({ error: "Event is full" });
+    }
 
-    //avoid duplicate
-    const { data: existing } = await supabase
+    const { data: existing, error: existingError } = await supabase
       .from("event_attendees")
       .select("id")
       .eq("event_id", eventId)
       .eq("user_id", user_id)
-      .maybeSingle();
+      .single();
 
-    if (existing)
-      return res.status(400).json({ error: "Already reserved this event" });
+    if (existing && !existingError) {
+      return res.status(400).json({ error: "You already reserved this event" });
+    }
 
     const { error: insertError } = await supabase
       .from("event_attendees")
-      .insert([{ event_id: eventId, user_id }]);
+      .insert({
+        event_id: eventId,
+        user_id: user_id,
+        status: "reserved",
+      });
+
     if (insertError) throw insertError;
 
-    const newCount = eventData.attendees_count + 1;
-    const { data: updatedEvent, error: updateError } = await supabase
+    const { error: updateError } = await supabase
       .from("events")
-      .update({ attendees_count: newCount })
-      .eq("id", eventId)
-      .select("attendees_count, capacity")
-      .single();
+      .update({
+        attendees_count: event.attendees_count + 1,
+      })
+      .eq("id", eventId);
+
     if (updateError) throw updateError;
 
-    const spotsRemaining = updatedEvent.capacity - updatedEvent.attendees_count;
-
     return res.status(200).json({
-      message: "Reservation successful!",
-      spotsLeft: spotsRemaining,
+      message: "Event reserved successfully",
     });
   } catch (error) {
     console.error("Error reserving event:", error);
@@ -208,40 +217,206 @@ export const cancelReservation = async (req, res) => {
     const user_id = req.user?.id;
     const { eventId } = req.params;
 
-    // Delete reservation
+    if (!user_id) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const { data: attendee, error: attendeeError } = await supabase
+      .from("event_attendees")
+      .select("id")
+      .eq("event_id", eventId)
+      .eq("user_id", user_id)
+      .single();
+
+    if (attendeeError || !attendee) {
+      return res
+        .status(404)
+        .json({ error: "You do not have a reservation for this event" });
+    }
+
     const { error: deleteError } = await supabase
       .from("event_attendees")
       .delete()
-      .eq("event_id", eventId)
-      .eq("user_id", user_id);
+      .eq("id", attendee.id);
+
     if (deleteError) throw deleteError;
 
-    // Increment capacity
-    const { data: eventData, error: eventError } = await supabase
+    const { data: event, error: eventError } = await supabase
       .from("events")
-      .select("capacity")
+      .select("attendees_count")
       .eq("id", eventId)
       .single();
-    if (eventError || !eventData)
-      return res.status(404).json({ error: "Event not found" });
 
-    const newCount = Math.max(eventData.attendees_count - 1, 0);
-    const { data: updatedEvent, error: updateError } = await supabase
+    if (eventError || !event) {
+      return res.status(404).json({ error: "Event not found after delete" });
+    }
+
+    const { error: updateError } = await supabase
       .from("events")
-      .update({ attendees_count: newCount })
-      .eq("id", eventId)
-      .select("attendees_count, capacity")
-      .single();
+      .update({
+        attendees_count: Math.max(0, event.attendees_count - 1),
+      })
+      .eq("id", eventId);
+
     if (updateError) throw updateError;
 
-    const spotsRemaining = updatedEvent.capacity - updatedEvent.attendees_count;
-
     return res.status(200).json({
-      message: "Reservation cancelled successfully",
-      spotsLeft: spotsRemaining,
+      message: "Reservation canceled successfully",
     });
   } catch (error) {
-    console.error("Error cancelling reservation:", error);
+    console.error("Error canceling reservation:", error);
     res.status(500).json({ error: "Failed to cancel reservation." });
+  }
+};
+
+//delete an event
+export const deleteEvent = async (req, res) => {
+  try {
+    const user_id = req.user?.id;
+    const { eventId } = req.params;
+
+    const { data: event, error: fetchError } = await supabase
+      .from("events")
+      .select("user_id")
+      .eq("id", eventId)
+      .single();
+
+    if (fetchError || !event)
+      return res.status(404).json({ error: "Event not found" });
+
+    if (event.user_id !== user_id)
+      return res.status(403).json({ error: "Unauthorized: Not your event" });
+
+    const { error: attendeeError } = await supabase
+      .from("event_attendees")
+      .delete()
+      .eq("event_id", eventId);
+
+    if (attendeeError) throw attendeeError;
+
+    const { error: deleteError } = await supabase
+      .from("events")
+      .delete()
+      .eq("id", eventId);
+
+    if (deleteError) throw deleteError;
+
+    return res.status(200).json({ message: "Event deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting event:", error);
+    res.status(500).json({ error: "Failed to delete event." });
+  }
+};
+
+//update an event
+export const updateEvent = async (req, res) => {
+  try {
+    const user_id = req.user?.id;
+    const { eventId } = req.params;
+
+    const { data: event, error: fetchError } = await supabase
+      .from("events")
+      .select("user_id")
+      .eq("id", eventId)
+      .single();
+
+    if (fetchError || !event)
+      return res.status(404).json({ error: "Event not found" });
+
+    if (event.user_id !== user_id)
+      return res.status(403).json({ error: "Unauthorized: Not your event" });
+
+    const updates = req.body;
+
+    const { data, error } = await supabase
+      .from("events")
+      .update(updates)
+      .eq("id", eventId)
+      .select();
+
+    if (error) throw error;
+
+    return res.status(200).json({
+      message: "Event updated successfully",
+      event: data[0],
+    });
+  } catch (error) {
+    console.error("Error updating event:", error);
+    res.status(500).json({ error: "Failed to update event." });
+  }
+};
+
+export const getEventById = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+
+    const { data: event, error } = await supabase
+      .from("events")
+      .select("*")
+      .eq("id", eventId)
+      .single();
+
+    if (error || !event) {
+      return res.status(404).json({ error: "Event not found" });
+    }
+
+    return res.status(200).json(event);
+  } catch (err) {
+    console.error("Error retrieving event:", err);
+    res.status(500).json({ error: "Server error retrieving event" });
+  }
+};
+
+// Get attendees for an event
+export const getEventAttendees = async (req, res) => {
+  try {
+    const user_id = req.user?.id;
+    const { eventId } = req.params;
+
+    console.log("🔍 Incoming request:");
+    console.log("   • eventId:", eventId);
+    console.log("   • logged-in user (req.user.id):", user_id);
+
+    const { data: event, error: eventError } = await supabase
+      .from("events")
+      .select("user_id")
+      .eq("id", eventId)
+      .single();
+
+    if (eventError || !event) {
+      return res.status(404).json({ error: "Event not found" });
+    }
+
+    if (String(event.user_id) !== String(user_id)) {
+      console.log("❌ Owner mismatch:", event.user_id, user_id);
+      return res.status(403).json({ error: "Unauthorized: Not your event" });
+    }
+
+    const { data: attendees, error } = await supabase
+      .from("event_attendees")
+      .select(
+        `
+        id,
+        created_at,
+        status,
+        users:user_id (
+          id,
+          name,
+          email
+        )
+      `
+      )
+      .eq("event_id", eventId)
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.error("❌ Supabase join error:", error);
+      return res.status(500).json({ error: "Failed to load attendees" });
+    }
+
+    return res.status(200).json({ attendees: attendees || [] });
+  } catch (err) {
+    console.error("❌ Server error fetching attendees:", err);
+    res.status(500).json({ error: "Failed to fetch attendees." });
   }
 };

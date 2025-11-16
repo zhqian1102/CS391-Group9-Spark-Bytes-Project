@@ -248,7 +248,7 @@ input:focus + .slider {
 }
 
 /* View Details button */
-.edit-event-button {
+.view-details-button {
   flex: 1;
   background: transparent;
   border: 2px solid #2c5258;
@@ -261,11 +261,49 @@ input:focus + .slider {
   font-weight: 600;
 }
 
-.edit-event-button:hover {
+.view-details-button:hover {
   background: #2c5258;
   color: white;
 }
 
-.edit-event-button:active {
+.view-attendees-button {
+  flex: 1;
+  background: #2d5f5d;
+  border: none;
+  color: white;
+  padding: 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.view-attendees-button:hover {
+  background: #2c5258;
+  color: white;
+}
+
+
+/* Cancel reservation button */
+.cancel-button {
+  flex: 1;
+  background: #dc3545;
+  border: none;
+  color: white;
+  padding: 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.cancel-button:hover {
+  background: white;
+  color: #2c5258;
+}
+
+.cancel-button:active {
   transform: translateY(0);
 }
