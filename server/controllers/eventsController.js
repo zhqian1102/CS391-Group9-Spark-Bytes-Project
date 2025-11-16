@@ -388,7 +388,7 @@ export const getEventAttendees = async (req, res) => {
     }
 
     if (String(event.user_id) !== String(user_id)) {
-      console.log("❌ Owner mismatch:", event.user_id, user_id);
+      console.log("Owner mismatch:", event.user_id, user_id);
       return res.status(403).json({ error: "Unauthorized: Not your event" });
     }
 
@@ -399,7 +399,7 @@ export const getEventAttendees = async (req, res) => {
         id,
         created_at,
         status,
-        users:user_id (
+        profiles!inner (
           id,
           name,
           email
@@ -410,13 +410,13 @@ export const getEventAttendees = async (req, res) => {
       .order("created_at", { ascending: true });
 
     if (error) {
-      console.error("❌ Supabase join error:", error);
+      console.error(" Supabase join error:", error);
       return res.status(500).json({ error: "Failed to load attendees" });
     }
 
     return res.status(200).json({ attendees: attendees || [] });
   } catch (err) {
-    console.error("❌ Server error fetching attendees:", err);
+    console.error("Server error fetching attendees:", err);
     res.status(500).json({ error: "Failed to fetch attendees." });
   }
 };

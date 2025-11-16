@@ -10,6 +10,7 @@ import NotificationPage from "./components/NotificationPage";
 import AboutPage from "./pages/About/AboutPage";
 import UserProfile from "./pages/UserProfile/UserProfile";
 import EditEventPage from "./pages/EditEvent/EditEvent";
+import ViewAttendeesPage from "./pages/ViewAttendees/ViewAttendees";
 import "./App.css";
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
             <Route path="/about" element={<AboutPage />} />
             <Route path="/profile" element={<UserProfile />} />
             <Route path="/editevent/:id" element={<EditEventPage />} />
+            <Route path="/viewattendees/:id" element={<ViewAttendeesPage />} />
           </Routes>
         </div>
       </Router>

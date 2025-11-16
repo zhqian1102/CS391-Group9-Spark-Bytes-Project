@@ -9,8 +9,7 @@ const API_URL = APP_API_URL;
 const MAX_IMAGES = 5;
 
 export default function EditEventPage() {
-
-     const navigate = useNavigate();
+  const navigate = useNavigate();
   const { id } = useParams();
   const [loading, setLoading] = useState(true);
 
@@ -30,7 +29,8 @@ export default function EditEventPage() {
 
   const totalImages = existingImages.length + newImagePreviews.length;
 
-  async function loadEvent() {
+  useEffect(() => {
+  async function fetchEvent() {
     try {
       const {
         data: { session },
@@ -51,15 +51,12 @@ export default function EditEventPage() {
       });
 
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        console.error("Error loading event:", errorData);
         alert("Failed to load event.");
         navigate("/events");
         return;
       }
 
       const event = await res.json();
-
       setTitle(event.title || "");
       setLocation(event.location || "");
       setDate(event.date || "");
@@ -70,19 +67,18 @@ export default function EditEventPage() {
       setFoodList(event.food_items || [{ item: "", qty: "" }]);
       setSelectedDietary(event.dietary_options || []);
       setExistingImages(event.image_urls || []);
-
       setLoading(false);
     } catch (error) {
-      console.error("Error in loadEvent:", error);
+      console.error("Error loading event:", error);
       alert("An error occurred while loading the event.");
       setLoading(false);
     }
   }
-  
-  
-  useEffect(() => {
-    loadEvent();
-  }, []);
+
+  fetchEvent();
+}, [id, navigate]);  
+
+
 
   useEffect(() => {
     return () => {
@@ -109,14 +105,12 @@ export default function EditEventPage() {
     setExistingImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Remove new image (not yet uploaded)
   const handleRemoveNewImage = (index) => {
     URL.revokeObjectURL(newImagePreviews[index]);
     setNewImageFiles(prev => prev.filter((_, i) => i !== index));
     setNewImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Handle new image selection
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     const remainingSlots = MAX_IMAGES - totalImages;
@@ -126,7 +120,6 @@ export default function EditEventPage() {
       return;
     }
 
-    // Validate file types
     const validFiles = files.filter(file => {
       if (!file.type.startsWith('image/')) {
         alert(`${file.name} is not an image file`);
@@ -137,13 +130,11 @@ export default function EditEventPage() {
 
     if (validFiles.length === 0) return;
 
-    // Create preview URLs
     const newPreviews = validFiles.map(file => URL.createObjectURL(file));
 
     setNewImageFiles(prev => [...prev, ...validFiles]);
     setNewImagePreviews(prev => [...prev, ...newPreviews]);
 
-    // Reset the file input
     e.target.value = '';
   };
 
@@ -152,7 +143,7 @@ export default function EditEventPage() {
 
     for (const file of files) {
       const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${file.name}`;
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from("event_images")
         .upload(fileName, file);
 
@@ -189,13 +180,11 @@ export default function EditEventPage() {
 
     const token = session.access_token;
 
-    // Upload new images if any
     let uploadedUrls = [];
     if (newImageFiles.length > 0) {
       uploadedUrls = await uploadImagesToSupabase(newImageFiles);
     }
 
-    // Combine existing images with newly uploaded ones
     const finalImageUrls = [...existingImages, ...uploadedUrls];
 
     const updatedEvent = {
@@ -428,7 +417,7 @@ export default function EditEventPage() {
           </div>
 
           <div className="form-buttons">
-            <button type="button" className="btn-secondary" onClick={() => navigate("/events")}>
+            <button type="button" className="btn-secondary" onClick={() => navigate("/organizerdashboard")}>
               Close
             </button>
             <button type="submit" className="btn-primary">

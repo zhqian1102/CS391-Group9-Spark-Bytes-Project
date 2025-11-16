@@ -85,7 +85,7 @@ export default function PostEvent() {
     for (const file of files) {
       const fileName = `${Date.now()}_${Math.random()
         .toString(36)
-        .substr(2, 9)}_${file.name}`;
+        .slice(2, 11)}_${file.name}`;
       const { data, error } = await supabase.storage
         .from("event_images")
         .upload(fileName, file);

@@ -79,8 +79,6 @@ const EventDetailModal = ({ event, open, onClose, onReserve }) => {
 
   if (!open || !event) return null;
 
-  if (!open || !event) return null;
-
   const totalSpots = event.capacity || 0;
   const attendees = event.attendees_count || 0;
   const spotsLeft = Math.max(totalSpots - attendees, 0);
@@ -106,11 +104,9 @@ const EventDetailModal = ({ event, open, onClose, onReserve }) => {
               <div className="modal-image-carousel">
                 <img
                   src={images[currentImageIndex]}
-                  alt={`${event.title || "Event"} - Image ${
-                    currentImageIndex + 1
+                  alt={`${event.title || "Event"} ${currentImageIndex + 1} of ${
+                    images.length
                   }`}
-                  loading="lazy"
-                  className="modal-carousel-image"
                 />
 
                 {/* Navigation arrows - only show if multiple images */}

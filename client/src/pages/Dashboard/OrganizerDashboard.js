@@ -55,6 +55,7 @@ const OrganizerDashboard = () => {
     setIsOrganizerView(!isOrganizerView);
     setTimeout(() => navigate("/userdashboard"), 300);
   };
+
   const handleDelete = async (eventId) => {
     if (!window.confirm("Are you sure you want to delete this event?")) return;
 
@@ -92,10 +93,108 @@ const OrganizerDashboard = () => {
   };
 
   const handleViewAttendees = (event) => {
-    navigate("/attendees", {
-      state: { eventId: event.id, eventTitle: event.title },
-    });
+    console.log("Navigating to attendees for event:", event.id);
+    navigate(`/viewattendees/${event.id}`);
   };
+
+  const today = new Date().setHours(0, 0, 0, 0); // normalize to midnight
+
+  const upcomingEvents = postedEvents.filter((e) => {
+    const eventDate = new Date(e.date).setHours(0, 0, 0, 0);
+    return eventDate >= today;
+  });
+
+  const pastEvents = postedEvents.filter((e) => {
+    const eventDate = new Date(e.date).setHours(0, 0, 0, 0);
+    return eventDate < today;
+  });
+
+  const EventsSection = ({ title, events, loading }) => (
+    <section className="posted-events-section" style={{ marginTop: "2rem" }}>
+      <div className="section-header">
+        <h3>{title}</h3>
+      </div>
+
+      {loading ? (
+        <p>Loading events...</p>
+      ) : events.length === 0 ? (
+        <p className="no-events-message">
+          No posted events in this category yet.{" "}
+        </p>
+      ) : (
+        <div className="events-grid">
+          {events.map((event) => (
+            <div key={event.id} className="event-card">
+              <div className="event-image-container">
+                <img
+                  src={event.image_urls?.[0]}
+                  alt={event.title}
+                  className="event-image"
+                />
+
+                <span className="spots-left">
+                  {event.capacity - event.attendees_count || event.capacity}{" "}
+                  Spots Left
+                </span>
+              </div>
+
+              <div className="event-content">
+                <div className="event-header">
+                  <h4 className="event-title">{event.title}</h4>
+                </div>
+
+                <div className="event-detail">
+                  <span className="detail-icon">📍</span>
+                  <span>{event.location}</span>
+                </div>
+
+                <div className="event-detail">
+                  <span className="detail-icon">📅</span>
+                  <span>{event.date}</span>
+                </div>
+
+                <div className="event-detail">
+                  <span className="detail-icon">🕐</span>
+                  <span>{event.time}</span>
+                </div>
+
+                <div className="event-tags">
+                  {event.dietary_options?.map((tag) => (
+                    <span key={tag} className="event-tag">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="event-actions">
+                  <button
+                    className="view-details-button"
+                    onClick={() => handleEdit(event)}
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    className="view-attendees-button"
+                    onClick={() => handleViewAttendees(event)}
+                  >
+                    Attendees
+                  </button>
+
+                  <button
+                    className="cancel-button"
+                    onClick={() => handleDelete(event.id)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
 
   return (
     <div className="organizerdashboard-container">
@@ -129,107 +228,20 @@ const OrganizerDashboard = () => {
               className="view-all-events-button"
               onClick={() => navigate("/post")}
             >
-              View All Events
+              Post A Event
             </button>
           </div>
+          <EventsSection
+            title="Upcoming Events"
+            events={upcomingEvents}
+            loading={loadingEvents}
+          />
 
-          {/* Event cards section */}
-          {loadingEvents ? (
-            <p>Loading your reserved events...</p>
-          ) : postedEvents.length === 0 ? (
-            <p style={{ textAlign: "center", padding: "2rem", color: "#666" }}>
-              You have not posted any events yet.{" "}
-              <button
-                onClick={() => navigate("/post")}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "#2c5258",
-                  textDecoration: "underline",
-                  cursor: "pointer",
-                  fontSize: "inherit",
-                }}
-              >
-                Post your first Leftover Food Event!
-              </button>
-            </p>
-          ) : (
-            <div className="events-grid">
-              {postedEvents.map((event) => (
-                <div key={event.id} className="event-card">
-                  {/* Image */}
-                  <div className="event-image-container">
-                    <img
-                      src={event.image_urls?.[0]}
-                      alt={event.title}
-                      className="event-image"
-                    />
-                    {/* Spots Left tag */}
-                    <span className="spots-left">
-                      {event.capacity - event.attendees_count || event.capacity}{" "}
-                      Spots Left
-                    </span>
-                  </div>
-
-                  {/* Event content*/}
-                  <div className="event-content">
-                    <div className="event-header">
-                      <h4 className="event-title">{event.title}</h4>
-                    </div>
-
-                    <div className="event-detail">
-                      <span className="detail-icon">📍</span>
-                      <span>{event.location}</span>
-                    </div>
-
-                    <div className="event-detail">
-                      <span className="detail-icon">📅</span>
-                      <span>{event.date}</span>
-                    </div>
-
-                    <div className="event-detail">
-                      <span className="detail-icon">🕐</span>
-                      <span>{event.time}</span>
-                    </div>
-
-                    <div className="event-tags">
-                      {event.dietary_options?.map((tag) => (
-                        <span key={tag} className="event-tag">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-
-                    <div className="event-actions">
-                      <button
-                        className="view-details-button"
-                        onClick={() => {
-                          handleEdit(event);
-                        }}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="view-attendees-button"
-                        onClick={() => {
-                          handleViewAttendees(event);
-                        }}
-                      >
-                        Attendees
-                      </button>
-                      {/* Cancel reservation button */}
-                      <button
-                        className="cancel-button"
-                        onClick={() => handleDelete(event.id)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <EventsSection
+            title="Past Events"
+            events={pastEvents}
+            loading={loadingEvents}
+          />
         </section>
       </main>
 
