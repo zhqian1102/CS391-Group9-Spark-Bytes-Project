@@ -229,7 +229,7 @@ const EventsPage = () => {
         <div className="events-page-header">
           <h1 className="events-page-title">Available Food Events</h1>
           <button className="create-post-btn" onClick={() => navigate("/post")}>
-            Create a Post
+            Post An Event
           </button>
         </div>
 

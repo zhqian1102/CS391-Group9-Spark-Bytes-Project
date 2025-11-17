@@ -8,8 +8,18 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
-app.use(cors());
+//cors
+app.use(
+  cors({
+    origin: "http://localhost:3000", // frontend url
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  })
+);
+app.options("*", cors());
+
+//middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
