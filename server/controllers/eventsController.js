@@ -3,7 +3,7 @@ import supabase from "../config/supabase.js";
 // Create an event
 export const createEvent = async (req, res) => {
   try {
-    const user_id = req.user?.id;
+    const user_id = req.profile?.id;
     if (!user_id) return res.status(401).json({ error: "Unauthorized" });
 
     const {
@@ -114,44 +114,53 @@ export const getAllEvents = async (req, res) => {
   }
 };
 
-// get user's posted and reserved events
-export const getEventsByUserId = async (req, res) => {
+// get posted event
+export const getPostedEvents = async (req, res) => {
   const { userId } = req.params;
 
   try {
-    const { data: postedEvents, error: postError } = await supabase
+    const { data: postedEvents, error } = await supabase
       .from("events")
       .select("*")
       .eq("user_id", userId);
-    if (postError) throw postError;
 
-    const { data: reserved, error: reservedError } = await supabase
+    if (error) throw error;
+
+    res.status(200).json({ posted: postedEvents });
+  } catch (err) {
+    console.error("Error fetching posted events:", err);
+    res.status(500).json({ error: "Failed to fetch posted events" });
+  }
+};
+
+//get user reserved events
+export const getUserReservedEvents = async (req, res) => {
+  try {
+    const user_id = req.profile?.id;
+
+    if (!user_id) {
+      return res.status(401).json({ reservedEventIds: [] });
+    }
+
+    const { data, error } = await supabase
       .from("event_attendees")
       .select("event_id")
-      .eq("user_id", userId);
-    if (reservedError) throw reservedError;
+      .eq("user_id", user_id);
 
-    const reservedIds = reserved.map((r) => r.event_id);
-    const { data: reservedEvents, error: fetchReservedError } = await supabase
-      .from("events")
-      .select("*")
-      .in("id", reservedIds);
-    if (fetchReservedError) throw fetchReservedError;
+    if (error) throw error;
 
-    return res.status(200).json({
-      posted: postedEvents,
-      reserved: reservedEvents,
-    });
-  } catch (error) {
-    console.error("Error fetching user events:", error);
-    res.status(500).json({ error: "Failed to fetch user's events." });
+    const reservedEventIds = data.map((row) => row.event_id);
+    res.status(200).json({ reservedEventIds });
+  } catch (err) {
+    console.error("Error fetching reserved events:", err);
+    res.status(500).json({ error: "Failed to load reserved events" });
   }
 };
 
 // Reserve an event
 export const reserveEvent = async (req, res) => {
   try {
-    const user_id = req.user?.id;
+    const user_id = req.profile.id;
     const { eventId } = req.params;
 
     if (!user_id) {
@@ -214,7 +223,7 @@ export const reserveEvent = async (req, res) => {
 // Cancel a reservation
 export const cancelReservation = async (req, res) => {
   try {
-    const user_id = req.user?.id;
+    const user_id = req.profile.id;
     const { eventId } = req.params;
 
     if (!user_id) {
@@ -272,7 +281,7 @@ export const cancelReservation = async (req, res) => {
 //delete an event
 export const deleteEvent = async (req, res) => {
   try {
-    const user_id = req.user?.id;
+    const user_id = req.profile?.id;
     const { eventId } = req.params;
 
     const { data: event, error: fetchError } = await supabase
@@ -308,15 +317,16 @@ export const deleteEvent = async (req, res) => {
   }
 };
 
-//update an event
+// Update an event
 export const updateEvent = async (req, res) => {
   try {
-    const user_id = req.user?.id;
+    const user_id = req.profile?.id;
+
     const { eventId } = req.params;
 
     const { data: event, error: fetchError } = await supabase
       .from("events")
-      .select("user_id")
+      .select("user_id, date")
       .eq("id", eventId)
       .single();
 
@@ -327,6 +337,28 @@ export const updateEvent = async (req, res) => {
       return res.status(403).json({ error: "Unauthorized: Not your event" });
 
     const updates = req.body;
+
+    const today = new Date().setHours(0, 0, 0, 0);
+    const oldEventDate = new Date(event.date).setHours(0, 0, 0, 0);
+
+    let shouldClearAttendees = false;
+
+    if (updates.date) {
+      const newEventDate = new Date(updates.date).setHours(0, 0, 0, 0);
+
+      const wasPast = oldEventDate < today;
+      const becomesFuture = newEventDate >= today;
+
+      if (wasPast && becomesFuture) {
+        shouldClearAttendees = true;
+      }
+    }
+
+    if (shouldClearAttendees) {
+      // Clear attendees
+      await supabase.from("event_attendees").delete().eq("event_id", eventId);
+      updates.attendees_count = 0;
+    }
 
     const { data, error } = await supabase
       .from("events")
@@ -370,12 +402,11 @@ export const getEventById = async (req, res) => {
 // Get attendees for an event
 export const getEventAttendees = async (req, res) => {
   try {
-    const user_id = req.user?.id;
+    const user_id = req.profile?.id;
     const { eventId } = req.params;
 
-    console.log("🔍 Incoming request:");
-    console.log("   • eventId:", eventId);
-    console.log("   • logged-in user (req.user.id):", user_id);
+    // console.log("   • eventId:", eventId);
+    // console.log("   • logged-in user (req.user.id):", user_id);
 
     const { data: event, error: eventError } = await supabase
       .from("events")

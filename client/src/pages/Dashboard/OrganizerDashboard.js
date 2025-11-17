@@ -28,7 +28,7 @@ const OrganizerDashboard = () => {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session.access_token;
 
-      const response = await fetch(`${API_URL}/api/events/user/${user.id}`, {
+      const response = await fetch(`${API_URL}/api/events/posted/${user.id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -40,7 +40,7 @@ const OrganizerDashboard = () => {
         console.log("Fetched events", result);
         setPostedEvents(result.posted || []);
       } else {
-        console.error("❌ Error loading events:", result.error);
+        console.error("Error loading events:", result.error);
       }
 
       setLoadingEvents(false);
@@ -63,7 +63,7 @@ const OrganizerDashboard = () => {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session.access_token;
 
-      const response = await fetch(`${API_URL}/api/events/${eventId}`, {
+      const response = await fetch(`${API_URL}/api/events/posted/${eventId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -79,25 +79,22 @@ const OrganizerDashboard = () => {
 
       alert("Event deleted successfully.");
 
-      // Remove from UI
       setPostedEvents((prev) => prev.filter((e) => e.id !== eventId));
     } catch (err) {
-      console.error("❌ Delete error:", err);
+      console.error(" Delete error:", err);
       alert("Server error while deleting event.");
     }
   };
 
   const handleEdit = (event) => {
-    console.log("EDIT CLICKED — event id = ", event.id);
     navigate(`/editevent/${event.id}`);
   };
 
   const handleViewAttendees = (event) => {
-    console.log("Navigating to attendees for event:", event.id);
     navigate(`/viewattendees/${event.id}`);
   };
 
-  const today = new Date().setHours(0, 0, 0, 0); // normalize to midnight
+  const today = new Date().setHours(0, 0, 0, 0);
 
   const upcomingEvents = postedEvents.filter((e) => {
     const eventDate = new Date(e.date).setHours(0, 0, 0, 0);
@@ -109,92 +106,117 @@ const OrganizerDashboard = () => {
     return eventDate < today;
   });
 
-  const EventsSection = ({ title, events, loading }) => (
-    <section className="posted-events-section" style={{ marginTop: "2rem" }}>
-      <div className="section-header">
-        <h3>{title}</h3>
-      </div>
+  const EventsSection = ({ title, events, loading }) => {
+    const today = new Date().setHours(0, 0, 0, 0);
 
-      {loading ? (
-        <p>Loading events...</p>
-      ) : events.length === 0 ? (
-        <p className="no-events-message">
-          No posted events in this category yet.{" "}
-        </p>
-      ) : (
-        <div className="events-grid">
-          {events.map((event) => (
-            <div key={event.id} className="event-card">
-              <div className="event-image-container">
-                <img
-                  src={event.image_urls?.[0]}
-                  alt={event.title}
-                  className="event-image"
-                />
-
-                <span className="spots-left">
-                  {event.capacity - event.attendees_count || event.capacity}{" "}
-                  Spots Left
-                </span>
-              </div>
-
-              <div className="event-content">
-                <div className="event-header">
-                  <h4 className="event-title">{event.title}</h4>
-                </div>
-
-                <div className="event-detail">
-                  <span className="detail-icon">📍</span>
-                  <span>{event.location}</span>
-                </div>
-
-                <div className="event-detail">
-                  <span className="detail-icon">📅</span>
-                  <span>{event.date}</span>
-                </div>
-
-                <div className="event-detail">
-                  <span className="detail-icon">🕐</span>
-                  <span>{event.time}</span>
-                </div>
-
-                <div className="event-tags">
-                  {event.dietary_options?.map((tag) => (
-                    <span key={tag} className="event-tag">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="event-actions">
-                  <button
-                    className="view-details-button"
-                    onClick={() => handleEdit(event)}
-                  >
-                    Edit
-                  </button>
-
-                  <button
-                    className="view-attendees-button"
-                    onClick={() => handleViewAttendees(event)}
-                  >
-                    Attendees
-                  </button>
-
-                  <button
-                    className="cancel-button"
-                    onClick={() => handleDelete(event.id)}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+    return (
+      <section className="posted-events-section" style={{ marginTop: "2rem" }}>
+        <div className="section-header">
+          <h3>{title}</h3>
         </div>
-      )}
-    </section>
-  );
+
+        {loading ? (
+          <p>Loading events...</p>
+        ) : events.length === 0 ? (
+          <p className="no-events-message">
+            No posted events in this category yet.
+          </p>
+        ) : (
+          <div className="events-grid">
+            {events.map((event) => {
+              const eventDate = new Date(event.date).setHours(0, 0, 0, 0);
+              const isExpired = eventDate < today;
+
+              return (
+                <div key={event.id} className="event-card">
+                  <div className="event-image-container">
+                    <img
+                      src={event.image_urls?.[0]}
+                      alt={event.title}
+                      className="event-image"
+                    />
+
+                    {isExpired ? (
+                      <span className="expired-badge">Expired</span>
+                    ) : (
+                      <span className="spots-left">
+                        {event.capacity - event.attendees_count} Spots Left
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="event-content">
+                    <div className="event-header">
+                      <h4 className="event-title">{event.title}</h4>
+                    </div>
+
+                    <div className="event-detail">
+                      <span className="detail-icon">📍</span>
+                      <span>{event.location}</span>
+                    </div>
+
+                    <div className="event-detail">
+                      <span className="detail-icon">📅</span>
+                      <span>{event.date}</span>
+                    </div>
+
+                    <div className="event-detail">
+                      <span className="detail-icon">🕐</span>
+                      <span>{event.time}</span>
+                    </div>
+
+                    <div className="event-tags">
+                      {event.dietary_options?.map((tag) => (
+                        <span key={tag} className="event-tag">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+
+                    <div className="event-actions">
+                      {!isExpired && (
+                        <>
+                          <button
+                            className="view-details-button"
+                            onClick={() => handleEdit(event)}
+                          >
+                            Edit
+                          </button>
+
+                          <button
+                            className="view-attendees-button"
+                            onClick={() => handleViewAttendees(event)}
+                          >
+                            Attendees
+                          </button>
+                        </>
+                      )}
+
+                      {isExpired && (
+                        <button
+                          className="view-details-button"
+                          onClick={() => navigate(`/editevent/${event.id}`)}
+                        >
+                          Repost
+                        </button>
+                      )}
+
+                      <button
+                        className="cancel-button"
+                        onClick={() => handleDelete(event.id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+    );
+  };
 
   return (
     <div className="organizerdashboard-container">
