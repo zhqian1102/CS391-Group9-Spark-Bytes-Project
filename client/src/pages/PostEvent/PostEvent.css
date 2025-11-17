@@ -87,7 +87,7 @@
 .food-inputs-container {
   display: flex;
   flex-direction: column;
-  gap: 16px; /* This adds consistent spacing between all rows */
+  gap: 16px;
 }
 
 .add-btn {

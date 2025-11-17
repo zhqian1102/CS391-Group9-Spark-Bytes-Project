@@ -230,7 +230,6 @@ export default function EditEventPage() {
 
         <form className="post-form" onSubmit={handleSave}>
 
-          {/* EVERYTHING BELOW IS IDENTICAL TO PostEvent.jsx */}
           <div className="form-group">
             <label>Event Title *</label>
             <input
@@ -267,7 +266,7 @@ export default function EditEventPage() {
             </div>
           </div>
 
-          {/* Food section (identical) */}
+
           <div className="food-section">
             <div className="form-row">
               <div className="form-group">

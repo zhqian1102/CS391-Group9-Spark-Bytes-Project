@@ -13,14 +13,11 @@ const UserDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Redirect to login if not authenticated
+  // Redirect to login
   useEffect(() => {
-    if (!user) {
-      navigate("/login");
-    }
+    if (!user) navigate("/login");
   }, [user, navigate]);
 
-  // Fetch reserved events from API
   const [reservedEvents, setReservedEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -28,37 +25,84 @@ const UserDashboard = () => {
 
   useEffect(() => {
     const fetchReservedEvents = async () => {
-      if (!user?.id) return;
-
       try {
         const {
           data: { session },
         } = await supabase.auth.getSession();
 
         const token = session?.access_token;
+        if (!token) return;
 
-        const res = await fetch(`${API_URL}/api/events/user/${user.id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const idsRes = await fetch(`${API_URL}/api/events/reserved/me`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (!res.ok) throw new Error("Failed to fetch reserved events");
+        if (!idsRes.ok) throw new Error("Failed to fetch reserved event IDs");
+        const idsData = await idsRes.json();
 
-        const data = await res.json();
-        // data.reserved contains the events this user has reserved
-        setReservedEvents(data.reserved || []);
+        const reservedIds = idsData.reservedEventIds || [];
+        if (reservedIds.length === 0) {
+          setReservedEvents([]);
+          setLoading(false);
+          return;
+        }
+
+        const eventRequests = reservedIds.map((id) =>
+          fetch(`${API_URL}/api/events/${id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }).then((res) => res.json())
+        );
+
+        const rawEvents = await Promise.all(eventRequests);
+
+        const today = new Date().setHours(0, 0, 0, 0);
+
+        const upcomingEvents = rawEvents.filter((ev) => {
+          if (!ev || !ev.date) return false;
+          const eventDate = new Date(ev.date).setHours(0, 0, 0, 0);
+          return eventDate >= today;
+        });
+
+        setReservedEvents(upcomingEvents);
         setLoading(false);
       } catch (err) {
-        console.error("Error fetching reserved events:", err);
+        console.error("Error loading reserved events:", err);
         setLoading(false);
       }
     };
 
     fetchReservedEvents();
-  }, [user]);
+  }, []);
 
-  // Modal state
+  const handleCancel = async (eventId) => {
+    if (!window.confirm("Confirm cancellation?")) return;
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const token = session?.access_token;
+
+      const res = await fetch(`${API_URL}/api/events/${eventId}/reserve`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to cancel reservation");
+      }
+
+      alert("Reservation cancelled");
+
+      setReservedEvents((prev) => prev.filter((ev) => ev.id !== eventId));
+    } catch (err) {
+      console.error("Cancel error:", err);
+      alert(err.message);
+    }
+  };
+
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
@@ -72,64 +116,25 @@ const UserDashboard = () => {
     setSelectedEvent(null);
   };
 
-  /* Cancel event state */
-  const handleCancel = async (eventId) => {
-    if (!window.confirm("Confirm cancellation?")) return;
-
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      const token = session?.access_token;
-
-      const res = await fetch(`${API_URL}/api/events/${eventId}/reserve`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to cancel reservation");
-      }
-
-      alert(`Cancelled reservation successfully`);
-
-      // Remove the cancelled event from the list
-      setReservedEvents((prevEvents) =>
-        prevEvents.filter((event) => event.id !== eventId)
-      );
-    } catch (error) {
-      console.error("Error cancelling reservation:", error);
-      alert(error.message || "Failed to cancel reservation");
-    }
-  };
-
   const handleToggleView = () => {
     setIsOrganizerView(!isOrganizerView);
-    setTimeout(() => {
-      navigate("/organizerdashboard");
-    }, 200);
+    setTimeout(() => navigate("/organizerdashboard"), 200);
   };
 
   return (
     <div className="userdashboard-container">
-      {/* Navigation Component */}
       <NavigationBar />
-      {/* Main Content */}
+
       <main className="userdashboard-main">
-          <h2 className="dashboard-welcome-title">
-            Welcome back, {user?.name || "Tester"}!
-          </h2>
+        <h2 className="dashboard-welcome-title">
+          Welcome back, {user?.name || "Friend"}!
+        </h2>
 
-
-        {/* Reserved Events Section */}
         <section className="reserved-events-section">
           <div className="section-header">
             <div className="section-header-left">
               <h3>My Reservations</h3>
+
               <div className="view-toggle-container">
                 <span className="toggle-label">My Reservations</span>
                 <label className="toggle-switch">
@@ -143,6 +148,7 @@ const UserDashboard = () => {
                 <span className="toggle-label">My Events</span>
               </div>
             </div>
+
             <button
               className="view-events-button"
               onClick={() => navigate("/events")}
@@ -151,12 +157,11 @@ const UserDashboard = () => {
             </button>
           </div>
 
-          {/* Event cards section */}
           {loading ? (
             <p>Loading your reserved events...</p>
           ) : reservedEvents.length === 0 ? (
             <p style={{ textAlign: "center", padding: "2rem", color: "#666" }}>
-              You haven't reserved any events yet.{" "}
+              You have no upcoming reservations.{" "}
               <button
                 onClick={() => navigate("/events")}
                 style={{
@@ -165,7 +170,6 @@ const UserDashboard = () => {
                   color: "#2c5258",
                   textDecoration: "underline",
                   cursor: "pointer",
-                  fontSize: "inherit",
                 }}
               >
                 Browse available events
@@ -175,7 +179,6 @@ const UserDashboard = () => {
             <div className="events-grid">
               {reservedEvents.map((event) => (
                 <div key={event.id} className="event-card">
-                  {/* Image */}
                   <div className="event-image-container">
                     <img
                       src={
@@ -185,13 +188,13 @@ const UserDashboard = () => {
                       alt={event.title}
                       className="event-image"
                     />
-                    {/* Spots left tag */}
+
                     <span className="spots-left">
-                      {event.capacity || 0} Spots Left
+                      {event.capacity - event.attendees_count || event.capacity}{" "}
+                      Spots Left
                     </span>
                   </div>
 
-                  {/* Event content*/}
                   <div className="event-content">
                     <div className="event-header">
                       <h4 className="event-title">{event.title}</h4>
@@ -222,16 +225,13 @@ const UserDashboard = () => {
                     </div>
 
                     <div className="event-actions">
-                      {/* View details button */}
                       <button
                         className="view-details-button"
-                        onClick={() => {
-                          handleViewDetails(event);
-                        }}
+                        onClick={() => handleViewDetails(event)}
                       >
                         View Details
                       </button>
-                      {/* Cancel reservation button */}
+
                       <button
                         className="cancel-button"
                         onClick={() => handleCancel(event.id)}
@@ -247,20 +247,17 @@ const UserDashboard = () => {
         </section>
       </main>
 
-      {/* Footer Component */}
       <Footer />
 
-      {/* Event Detail Modal */}
+      {/* Modal */}
       {showModal && selectedEvent && (
         <EventDetailModal
           event={{
             ...selectedEvent,
-            isReserved: true, // Already reserved since it's on dashboard
-            spotsLeft: selectedEvent.capacity || 0,
-            totalSpots: selectedEvent.capacity || 0,
+            isReserved: true,
+            spotsLeft: selectedEvent.capacity - selectedEvent.attendees_count,
             image: selectedEvent.image_urls?.[0],
             tags: selectedEvent.dietary_options || [],
-            dietaryTags: selectedEvent.dietary_options || [],
             foodItems:
               selectedEvent.food_items?.map((f) => ({
                 name: f.item,

@@ -35,35 +35,82 @@ const EventsPage = () => {
     }
   }, [user, navigate]);
 
-  // Fetch Events from the Database
   useEffect(() => {
     const fetchEvents = async () => {
       try {
+        setLoading(true);
+
         const {
           data: { session },
         } = await supabase.auth.getSession();
 
         const token = session?.access_token;
+
+        // ADD THIS CHECK
+        if (!token) {
+          console.error("No auth token found");
+          setLoading(false);
+          return;
+        }
+
         const params = new URLSearchParams(location.search);
         const search = params.get("search") || "";
 
-        const endpoint = `${API_URL}/api/events${
-          search ? `?search=${encodeURIComponent(search)}` : ""
-        }`;
+        // Fetch events
+        console.log("Fetching events..."); // ADD THIS
+        const eventsRes = await fetch(
+          `${API_URL}/api/events${
+            search ? `?search=${encodeURIComponent(search)}` : ""
+          }`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
 
-        const res = await fetch(endpoint, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        if (!eventsRes.ok) {
+          console.error("Events fetch failed:", eventsRes.status); // ADD THIS
+          throw new Error("Failed to load events");
+        }
+
+        const eventsData = await eventsRes.json();
+        console.log("Events data:", eventsData); // ADD THIS
+        let fetchedEvents = eventsData.events || [];
+
+        // Fetch reserved events
+        console.log("Fetching reserved events..."); // ADD THIS
+        const reservedRes = await fetch(`${API_URL}/api/events/reserved/me`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (!res.ok) throw new Error("Failed to fetch events");
+        console.log("Reserved response status:", reservedRes.status); // ADD THIS
 
-        const data = await res.json();
-        setEvents(data.events || []);
+        let reservedIds = [];
+        if (reservedRes.ok) {
+          const reservedData = await reservedRes.json();
+          console.log("Reserved data:", reservedData); // ADD THIS
+          reservedIds = reservedData.reservedEventIds || [];
+        } else {
+          console.error("Reserved fetch failed:", await reservedRes.text()); // ADD THIS
+        }
+
+        // Merge reserved status
+        const merged = fetchedEvents.map((e) => {
+          const isReserved = reservedIds.some(
+            (rid) => String(rid) === String(e.id)
+          );
+          console.log(`Event ${e.id} reserved:`, isReserved);
+          return {
+            ...e,
+            isReserved,
+          };
+        });
+
+        console.log("Merged events:", merged); // ADD THIS
+        setEvents(merged);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching events:", err);
+        setLoading(false); // ADD THIS - This was missing!
       }
     };
 
