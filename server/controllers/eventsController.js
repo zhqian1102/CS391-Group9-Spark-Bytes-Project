@@ -169,7 +169,7 @@ export const reserveEvent = async (req, res) => {
 
     const { data: event, error: eventError } = await supabase
       .from("events")
-      .select("capacity, attendees_count")
+      .select("capacity, attendees_count, user_id, title")
       .eq("id", eventId)
       .single();
 
@@ -210,6 +210,48 @@ export const reserveEvent = async (req, res) => {
       .eq("id", eventId);
 
     if (updateError) throw updateError;
+
+    // Notification Logic
+    // Get the name of the user who made the reservation
+    const { data: reserverProfile } = await supabase
+      .from("profiles")
+      .select("name")
+      .eq("id", user_id)
+      .single();
+
+    const reserverName = reserverProfile?.name || "Someone";
+
+    // Notify the event host that someone reserved their event
+    await supabase.from("notifications").insert({
+      user_id: event.user_id, // The host's user_id
+      type: "reservation",
+      title: reserverName,
+      message: `${reserverName} reserved your food event "${event.title}"`,
+      event_id: eventId,
+      is_read: false,
+    });
+
+    // Notify the attendee that they successfully reserved
+    await supabase.from("notifications").insert({
+      user_id: user_id, // The person who made the reservation
+      type: "confirmation",
+      title: "Reservation Confirmed",
+      message: `You successfully reserved "${event.title}"`,
+      event_id: eventId,
+      is_read: false,
+    });
+
+    // If event is now full, notify host
+    if (event.attendees_count + 1 >= event.capacity) {
+      await supabase.from("notifications").insert({
+        user_id: event.user_id,
+        type: "all_reserved",
+        title: "Event Full",
+        message: `All your food from "${event.title}" have been reserved!`,
+        event_id: eventId,
+        is_read: false,
+      });
+    }
 
     return res.status(200).json({
       message: "Event reserved successfully",
@@ -252,7 +294,7 @@ export const cancelReservation = async (req, res) => {
 
     const { data: event, error: eventError } = await supabase
       .from("events")
-      .select("attendees_count")
+      .select("attendees_count, user_id, title")
       .eq("id", eventId)
       .single();
 
@@ -268,6 +310,26 @@ export const cancelReservation = async (req, res) => {
       .eq("id", eventId);
 
     if (updateError) throw updateError;
+
+    // Notification logic
+    // Get the name of the user who cancelled
+    const { data: cancellerProfile } = await supabase
+      .from("profiles")
+      .select("name")
+      .eq("id", user_id)
+      .single();
+
+    const cancellerName = cancellerProfile?.name || "Someone";
+
+    // Notify the event HOST about the cancellation
+    await supabase.from("notifications").insert({
+      user_id: event.user_id, // The host's user_id
+      type: "cancellation",
+      title: cancellerName,
+      message: `${cancellerName} cancelled their reservation for your food event "${event.title}"`,
+      event_id: eventId,
+      is_read: false,
+    });
 
     return res.status(200).json({
       message: "Reservation canceled successfully",
