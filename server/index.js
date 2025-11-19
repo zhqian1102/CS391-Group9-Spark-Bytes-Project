@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import authRouter from "./routes/auth.js";
 import eventsRouter from "./routes/event.js";
+import notificationsRouter from "./routes/notifications.js";
 
 dotenv.config();
 
@@ -14,7 +15,7 @@ app.use(
     origin: "http://localhost:3000", // frontend url
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
   })
 );
 app.options("*", cors());
@@ -26,6 +27,7 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use("/api/auth", authRouter);
 app.use("/api/events", eventsRouter);
+app.use("/api/notifications", notificationsRouter);
 
 // Basic route
 app.get("/", (req, res) => {
