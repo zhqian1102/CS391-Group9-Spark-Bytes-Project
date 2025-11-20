@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./EventDetailModal.css";
+import EventLocationMap from "./EventLocationMap";
 
 const EventDetailModal = ({ event, open, onClose, onReserve }) => {
   const dialogRef = useRef(null);
@@ -181,13 +182,10 @@ const EventDetailModal = ({ event, open, onClose, onReserve }) => {
                 </span>
                 <span>{event.time}</span>
               </div>
-              <div className="modal-info-item">
-                <span className="modal-info-icon" aria-hidden="true">
-                  📍
-                </span>
-                <span>{event.location}</span>
-              </div>
             </div>
+
+            {/* Google Maps Embed */}
+            <EventLocationMap locationCode={event.location} />
 
             {/* Description */}
             {event.description && (

@@ -1,0 +1,57 @@
+/* EventLocationMap.css */
+
+.event-location-map {
+    margin: 20px 0;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e8e8e8;
+  }
+  
+  .map-container {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 12px;
+    background-color: #f0f0f0;
+  }
+  
+  .map-container iframe {
+    display: block;
+    width: 100%;
+    height: 300px;
+    border: none;
+  }
+  
+  .map-caption {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    font-size: 14px;
+    color: #555;
+  }
+  
+  .map-icon {
+    font-size: 18px;
+  }
+  
+  .map-label {
+    font-weight: 500;
+    color: #2c2c2c;
+  }
+  
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .map-container iframe {
+      height: 250px;
+    }
+    
+    .map-caption {
+      font-size: 13px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .map-container iframe {
+      height: 200px;
+    }
+  }
