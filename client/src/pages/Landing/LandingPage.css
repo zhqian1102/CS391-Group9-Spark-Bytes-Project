@@ -1,0 +1,141 @@
+.landing-container {
+  min-height: 100vh;
+  width: 100%;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 40px 20px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.landing-title {
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 100px;
+  line-height: 1.05;
+  letter-spacing: -1px;
+}
+
+.title-line {
+  display: block;
+  opacity: 0;
+  transition: opacity 1.5s ease-in-out;
+}
+
+.title-line.first-line {
+  font-size: 4rem;
+}
+
+.title-line.second-line {
+  font-size: 3.5rem;
+}
+
+.title-line.fade-in {
+  opacity: 1;
+}
+
+.landing-buttons {
+  display: flex;
+  gap: 30px;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+}
+
+.landing-buttons.fade-in {
+  opacity: 1;
+}
+
+.landing-btn {
+  padding: 18px 50px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  min-width: 180px;
+}
+
+.signup-btn {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  color: white;
+}
+
+.signup-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+  background: linear-gradient(135deg, #45a049 0%, #4CAF50 100%);
+}
+
+.login-btn {
+  background-color: #ffffff;
+  color: #1a1a1a;
+  border: 2px solid #1a1a1a;
+}
+
+.login-btn:hover {
+  transform: translateY(-3px);
+  background-color: #1a1a1a;
+  color: #ffffff;
+  box-shadow: 0 8px 25px rgba(26, 26, 26, 0.2);
+}
+
+.landing-btn:active {
+  transform: translateY(-1px);
+}
+
+.landing-footer {
+  position: absolute;
+  bottom: 30px;
+  text-align: center;
+  color: #999;
+  font-size: 0.9rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .landing-title {
+    font-size: 2.5rem;
+    margin-bottom: 40px;
+  }
+
+  .landing-buttons {
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .landing-btn {
+    width: 100%;
+    padding: 16px 40px;
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-title {
+    font-size: 2rem;
+    margin-bottom: 30px;
+  }
+
+  .landing-btn {
+    padding: 14px 30px;
+    font-size: 1rem;
+  }
+}

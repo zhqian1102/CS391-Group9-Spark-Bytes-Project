@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import LandingPage from "./pages/Landing/LandingPage";
 import Login from "./pages/LogIn/Login";
 import EventsPage from "./pages/Events/EventsPage";
 import UserDashboard from "./pages/Dashboard/UserDashboard";
@@ -19,7 +20,7 @@ function App() {
       <Router>
         <div className="App">
           <Routes>
-            <Route path="/" element={<Login />} />
+            <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/events" element={<EventsPage />} />
             <Route path="/post" element={<PostEvent />} />
