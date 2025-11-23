@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import authRouter from "./routes/auth.js";
 import eventsRouter from "./routes/event.js";
 import notificationsRouter from "./routes/notifications.js";
+import userProfileRouter from './routes/userProfile.js';
 
 dotenv.config();
 
@@ -28,6 +29,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRouter);
 app.use("/api/events", eventsRouter);
 app.use("/api/notifications", notificationsRouter);
+app.use('/api/user', userProfileRouter);
 
 // Basic route
 app.get("/", (req, res) => {
