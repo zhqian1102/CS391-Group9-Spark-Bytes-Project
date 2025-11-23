@@ -6,48 +6,114 @@ const router = express.Router();
 // Middleware to get user from token
 const authenticateUser = async (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'No token' });
+  
+  if (!token) {
+    return res.status(401).json({ error: 'No token provided' });
+  }
   
   try {
     const { data: { user }, error } = await supabase.auth.getUser(token);
-    if (error) return res.status(401).json({ error: 'Invalid token' });
+    
+    if (error) {
+      console.error('Auth error:', error);
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+    
+    if (!user) {
+      return res.status(401).json({ error: 'User not found' });
+    }
     
     req.userId = user.id;
+    req.userEmail = user.email;
     next();
   } catch (err) {
-    return res.status(401).json({ error: 'Auth failed' });
+    console.error('Authentication failed:', err);
+    return res.status(401).json({ error: 'Authentication failed' });
   }
 };
 
-// GET profile
+// GET /api/user/profile
 router.get('/profile', authenticateUser, async (req, res) => {
-  const { data, error } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', req.userId)
-    .single();
+  try {
+    console.log('Fetching profile for user:', req.userId);
     
-  if (error) return res.status(400).json({ error: error.message });
-  res.json({ success: true, user: data });
+    const { data, error } = await supabase
+      .from('profiles')  
+      .select('*')
+      .eq('id', req.userId)
+      .single();
+    
+    if (error) {
+      console.error('Error fetching profile:', error);
+      return res.status(400).json({ error: error.message });
+    }
+    
+    if (!data) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
+    
+    const userProfile = {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      createdAt: data.created_at
+    };
+    
+    console.log('Profile fetched successfully');
+    res.json({ success: true, user: userProfile });
+    
+  } catch (err) {
+    console.error('Profile fetch error:', err);
+    res.status(500).json({ error: 'Failed to fetch profile' });
+  }
 });
 
-// PUT profile
+// PUT /api/user/profile
 router.put('/profile', authenticateUser, async (req, res) => {
-  const { name, phone, dietaryPreferences } = req.body;
-  
-  const { data, error } = await supabase
-    .from('users')
-    .update({ 
-      name, 
-      phone, 
-      dietary_preferences: dietaryPreferences 
-    })
-    .eq('id', req.userId)
-    .select()
-    .single();
+  try {
+    const { name } = req.body;
     
-  if (error) return res.status(400).json({ error: error.message });
-  res.json({ success: true, user: data, message: 'Profile updated' });
+    console.log('Updating profile for user:', req.userId);
+    
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ error: 'Name is required' });
+    }
+    
+    const { data, error } = await supabase
+      .from('profiles')  // ← CHANGED FROM 'users' TO 'profiles'
+      .update({ name: name.trim() })
+      .eq('id', req.userId)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error updating profile:', error);
+      return res.status(400).json({ error: error.message });
+    }
+    
+    if (!data) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
+    
+    const userProfile = {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      createdAt: data.created_at
+    };
+    
+    console.log('Profile updated successfully');
+    
+    res.json({ 
+      success: true, 
+      user: userProfile, 
+      message: 'Profile updated successfully' 
+    });
+    
+  } catch (err) {
+    console.error('Profile update error:', err);
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
 });
 
 export default router;
