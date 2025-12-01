@@ -31,6 +31,16 @@ const NavigationBar = () => {
     }
   }, [searchQuery, navigate, location.pathname]);
 
+  // Get user initials for placeholder
+  const getInitials = () => {
+    if (!user?.name) return '?';
+    const names = user.name.split(' ');
+    if (names.length >= 2) {
+      return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+    }
+    return user.name.substring(0, 2).toUpperCase();
+  };
+
   const handleLogout = () => {
     if (window.confirm("Confirm logout?")) {
       logout();
@@ -110,7 +120,7 @@ const NavigationBar = () => {
           <span>🔔</span>
         </button>
 
-       {/* Profile Dropdown with Picture */}
+        {/* Profile Dropdown with Picture */}
         <div className="profile-dropdown-container">
           <button
             className="profile-picture-button"
@@ -143,12 +153,12 @@ const NavigationBar = () => {
 
               <div className="profile-menu-divider"></div>
 
-              <buttom
+              <button
                 className="profile-menu-item"
                 onClick={handleCreateNewEvent}
               >
                 <span>Create New Event</span>
-              </buttom>
+              </button>
 
               <button className="profile-menu-item" onClick={handleViewProfile}>
                 <span>View Profile</span>
