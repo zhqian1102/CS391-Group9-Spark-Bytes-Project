@@ -8,8 +8,8 @@ A platform for Boston University students and faculty members to post events tha
 
 | Guide | Description |
 |-------|-------------|
-| � [**Backend Setup Guide**](./BACKEND-SETUP-GUIDE.md) | **START HERE!** Complete guide to get the backend running |
-| �📧 [**Email Verification Setup**](./EMAIL-VERIFICATION-SETUP.md) | Configure email verification with Gmail for user registration |
+| 📖 [**Backend Setup Guide**](./BACKEND-SETUP-GUIDE.md) | **START HERE!** Complete guide to get the backend running |
+| 📧 [**Email Verification Setup**](./EMAIL-VERIFICATION-SETUP.md) | Configure email verification with Gmail for user registration |
 | 🗄️ [**Supabase Integration**](./SUPABASE-INTEGRATION-GUIDE.md) | Set up cloud database and authentication |
 | 🔧 [**Supabase Setup (Quick)**](./SUPABASE-SETUP.md) | Quick start guide for Supabase configuration |
 | 📝 [**Changes Summary**](./CHANGES-SUMMARY.md) | Detailed technical documentation of recent updates |
@@ -20,13 +20,13 @@ A platform for Boston University students and faculty members to post events tha
 
 ---
 
-## Features
+## Project Snapshot
 
 - 🔐 Secure login/signup with BU email validation
 - 👥 Support for students and event organizers
 - 🍔 Post and discover food events on campus
 - ♻️ Help reduce food waste at BU
-- 📱 Modern, responsive design
+- 📱 Responsive BU-themed UI with navigation, search, alerts toggle, and profile menu.
 
 ## Tech Stack
 
@@ -48,7 +48,8 @@ A platform for Boston University students and faculty members to post events tha
 1. Clone the repository:
 
 ```bash
-cd CS391-Group9-Spark-Bytes-Project-main
+git clone <repo-url>
+cd CS391-Group9-Spark-Bytes-Project
 ```
 
 2. Install dependencies for both server and client:
@@ -101,114 +102,58 @@ npm start
 
 The backend MUST be running on `http://localhost:5001` for the app to work!
 
-**Check if it's running:** Open `http://localhost:5001` in your browser. You should see the API welcome message.
-
-**For detailed help:** See [BACKEND-SETUP-GUIDE.md](./BACKEND-SETUP-GUIDE.md)
-
-### Port Already in Use
-
-**Problem:** Error says port 5001 is already in use.
-
-**Solution (Mac/Linux):**
-```bash
-lsof -ti:5001 | xargs kill -9
-npm start
-```
-
-**Solution (Windows):**
-```powershell
-Get-Process -Id (Get-NetTCPConnection -LocalPort 5001).OwningProcess | Stop-Process
-npm start
-```
-
-### Module Not Found Errors
-
-**Solution:**
-```bash
-rm -rf node_modules package-lock.json
-npm run install-all
-```
-
-**📚 More troubleshooting:** Check [BACKEND-SETUP-GUIDE.md](./BACKEND-SETUP-GUIDE.md#troubleshooting)
-
 ## Project Structure
 
 ```
-CS391-Group9-Spark-Bytes-Project-main/
+CS391-Group9-Spark-Bytes-Project/
 ├── client/                 # React frontend
-│   ├── public/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── Login.js
-│   │   │   └── Login.css
-│   │   ├── App.js
-│   │   ├── App.css
-│   │   ├── index.js
-│   │   └── index.css
-│   └── package.json
-├── server/                 # Node.js backend
-│   ├── routes/
-│   │   └── auth.js
-│   └── index.js
-├── .env
-├── .gitignore
-├── package.json
-└── README.md
+│   ├── public/             # Static assets
+│   └── src/
+│       ├── components/     # Navbar, modals, shared UI
+│       ├── pages/          # Login, Dashboard, Events, etc.
+│       ├── context/        # Auth context + API calls
+│       └── config/         # Supabase client, location map
+├── server/                 # Express backend
+│   ├── routes/             # Auth, events, users
+│   ├── controllers/        # Request handlers
+│   ├── middleware/         # JWT/auth middleware
+│   └── config/             # Supabase server client
+├── *.md                    # Setup and integration guides
+├── package*.json           # Scripts and dependencies
+└── README.md               # Project overview (this file)
 ```
 
 ## Current Features
 
-### Login Page
+### Authentication & Accounts
+- BU-only email validation with password strength rules.
+- Two-step email verification with 6-digit codes (resend + 10-minute expiry).
+- Supabase Auth integration with JWT-based sessions; localStorage fallback for quick demos.
+- Profile data persisted in Supabase when configured.
 
-- Professional split-screen design with BU colors (red gradient and white)
-- Toggle between login and signup modes
-- BU email validation (@bu.edu)
-- User type selection (Student/Event Organizer)
-- Password strength requirements
-- Responsive design for mobile and desktop
-- Smooth animations and transitions
-- Supabase authentication integration
+### Users & Roles
+- Student and Event Organizer flows.
+- Profile viewing/management and logout from the profile dropdown.
 
-### User Dashboard Page
+### Events & Reservations
+- Event creation with title, description, location, date, time, food items, capacity, and dietary tags.
+- Optional image uploads with graceful handling for failures.
+- Event feed showing availability, capacity, dietary tags, and remaining spots.
+- Detail modals for registration/cancellation and attendee management for organizers.
 
-- Personalized welcome message with user name
-- Grid display of reserved events
-- Event cards showing title, location, date, time, dietary tags and spots left
-- "View Details" button opens event detail modal
-- "Cancel" button cancels reservations
-- "View Events" button to browse all events
+### Dashboard & Navigation
+- Personalized dashboard showing reserved events and quick actions.
+- Reusable navigation bar with logo, search, links, alerts toggle, and profile dropdown.
+- Mobile-ready layouts with smooth transitions and BU gradient theming.
 
-### Navigation Bar Component
-
-- Reusable header component
-- Logo, search bar, navigation link and profile dropdown
-- Profile dropdown with alerts toggle and logout functionality
-- Responsive design
-- BU colors (red gradient and white)
-
-## Implemented Features
-
-### ✅ Authentication System
-- Secure login/signup with BU email validation (@bu.edu)
-- **Email verification with 6-digit codes** (NEW!)
-- Supabase Auth integration with cloud storage
-- JWT token-based authentication
-- Dual storage system (Supabase + local fallback)
-- User profiles with customizable data
-
-### ✅ User Management
-- User type support (students and event organizers)
-- Profile management and viewing
-- Password encryption with bcrypt
-- Email verification system with expiration
-- Resend verification code functionality
+### Backend & API
+- Express API with auth, events, and profile routes.
+- JWT middleware for protected routes.
+- Nodemailer-based email delivery for verification codes.
+- Supabase service role integration for secure database access.
 
 ## Future Enhancements
 
-- Event posting and discovery
-- Real-time notifications
-- Event filtering by location and time
-- Image uploads for events
 - Admin dashboard
 - Push notifications for mobile
 
@@ -223,7 +168,7 @@ MIT
 Ilias Zaher
 Zhihui Qian
 Merem Gabriel
-Ivy Shi
+Shu (Ivy) Shi
 Liting Zheng
 
 =======
