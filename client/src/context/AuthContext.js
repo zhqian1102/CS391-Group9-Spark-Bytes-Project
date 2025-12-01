@@ -241,42 +241,112 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateProfile = async (updates) => {
-    try {
-      const updatedUser = { ...user, ...updates };
-      setUser(updatedUser);
-      localStorage.setItem("user", JSON.stringify(updatedUser));
-
-      // If using Supabase, update there too
-      if (supabase && user?.id) {
-        // Convert camelCase to snake_case for database
-        const dbUpdates = {};
-        if (updates.name) dbUpdates.name = updates.name;
-        if (updates.phone) dbUpdates.phone = updates.phone;
-        if (updates.dietaryPreferences)
-          dbUpdates.dietary_preferences = updates.dietaryPreferences;
-
-        const { error } = await supabase
-          .from("users")
-          .update(updates)
-          .eq("id", user.id);
-
-        if (error) throw error;
+  try {
+    // Update name and/or profilePicture via backend API
+    if (updates.name || updates.profilePicture !== undefined) {
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+      
+      let token = null;
+      
+      if (supabase) {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Error getting session:', error);
+        }
+        token = session?.access_token;
       }
-
+      
+      if (!token) {
+        console.error('No authentication token available');
+        return { success: false, error: 'No authentication token' };
+      }
+      
+      // Build request body
+      const requestBody = {};
+      if (updates.name) requestBody.name = updates.name;
+      if (updates.profilePicture !== undefined) requestBody.profilePicture = updates.profilePicture;
+      
+      const response = await fetch(`${API_URL}/api/user/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(requestBody)
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        console.error('Profile update failed:', data);
+        return { success: false, error: data.error || 'Failed to update profile' };
+      }
+      
+      // Update local state
+      const updatedUser = {
+        ...user,
+        name: data.user.name,
+        profilePicture: data.user.profilePicture
+      };
+      
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
       return { success: true, user: updatedUser };
-    } catch (err) {
-      return { success: false, error: err.message };
     }
-  };
+    
+    // For other fields (dietaryPreferences), just store in localStorage
+    const updatedUser = { ...user, ...updates };
+    setUser(updatedUser);
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    
+    return { success: true, user: updatedUser };
+  } catch (err) {
+    console.error('Update profile error:', err);
+    return { success: false, error: err.message };
+  }
+};
 
-  const refreshUser = async () => {
+
+const refreshUser = async () => {
+  try {
+    if (supabase) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        // Load profile from database
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profile) {
+          const userData = {
+            id: session.user.id,
+            email: session.user.email,
+            name: profile.name,
+            userType: profile.user_type,
+            profilePicture: profile.profile_picture,
+          };
+          setUser(userData);
+          localStorage.setItem("user", JSON.stringify(userData));
+          return { success: true };
+        }
+      }
+    }
+
+    // Fallback to localStorage
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       setUser(JSON.parse(storedUser));
       return { success: true };
     }
     return { success: false };
-  };
+  } catch (err) {
+    console.error('Error refreshing user:', err);
+    return { success: false };
+  }
+};
 
   const value = {
     user,
