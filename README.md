@@ -102,6 +102,36 @@ npm start
 
 The backend MUST be running on `http://localhost:5001` for the app to work!
 
+**Check if it's running:** Open `http://localhost:5001` in your browser. You should see the API welcome message.
+
+**For detailed help:** See [BACKEND-SETUP-GUIDE.md](./BACKEND-SETUP-GUIDE.md)
+
+### Port Already in Use
+
+**Problem:** Error says port 5001 is already in use.
+
+**Solution (Mac/Linux):**
+```bash
+lsof -ti:5001 | xargs kill -9
+npm start
+```
+
+**Solution (Windows):**
+```powershell
+Get-Process -Id (Get-NetTCPConnection -LocalPort 5001).OwningProcess | Stop-Process
+npm start
+```
+
+### Module Not Found Errors
+
+**Solution:**
+```bash
+rm -rf node_modules package-lock.json
+npm run install-all
+```
+
+**📚 More troubleshooting:** Check [BACKEND-SETUP-GUIDE.md](./BACKEND-SETUP-GUIDE.md#troubleshooting)
+
 ## Project Structure
 
 ```
