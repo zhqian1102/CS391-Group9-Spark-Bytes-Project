@@ -14,13 +14,8 @@ const authenticateUser = async (req, res, next) => {
   try {
     const { data: { user }, error } = await supabase.auth.getUser(token);
     
-    if (error) {
-      console.error('Auth error:', error);
+    if (error || !user) {
       return res.status(401).json({ error: 'Invalid token' });
-    }
-    
-    if (!user) {
-      return res.status(401).json({ error: 'User not found' });
     }
     
     req.userId = user.id;
@@ -35,16 +30,13 @@ const authenticateUser = async (req, res, next) => {
 // GET /api/user/profile
 router.get('/profile', authenticateUser, async (req, res) => {
   try {
-    console.log('Fetching profile for user:', req.userId);
-    
     const { data, error } = await supabase
-      .from('profiles')  
+      .from('profiles')
       .select('*')
       .eq('id', req.userId)
       .single();
     
     if (error) {
-      console.error('Error fetching profile:', error);
       return res.status(400).json({ error: error.message });
     }
     
@@ -56,10 +48,11 @@ router.get('/profile', authenticateUser, async (req, res) => {
       id: data.id,
       name: data.name,
       email: data.email,
+      profilePicture: data.profile_picture || null,
+      dietaryPreferences: data.dietary_preferences || [],
       createdAt: data.created_at
     };
     
-    console.log('Profile fetched successfully');
     res.json({ success: true, user: userProfile });
     
   } catch (err) {
@@ -71,23 +64,35 @@ router.get('/profile', authenticateUser, async (req, res) => {
 // PUT /api/user/profile
 router.put('/profile', authenticateUser, async (req, res) => {
   try {
-    const { name } = req.body;
-    
-    console.log('Updating profile for user:', req.userId);
+    const { name, profilePicture, dietaryPreferences } = req.body;
     
     if (!name || name.trim() === '') {
       return res.status(400).json({ error: 'Name is required' });
     }
     
+    // Build update object
+    const updates = {
+      name: name.trim()
+    };
+    
+    // Add profile picture if provided (including null to remove)
+    if (profilePicture !== undefined) {
+      updates.profile_picture = profilePicture;
+    }
+    
+    // Add dietary preferences if provided
+    if (dietaryPreferences !== undefined) {
+      updates.dietary_preferences = dietaryPreferences;
+    }
+    
     const { data, error } = await supabase
-      .from('profiles')  // ← CHANGED FROM 'users' TO 'profiles'
-      .update({ name: name.trim() })
+      .from('profiles')
+      .update(updates)
       .eq('id', req.userId)
       .select()
       .single();
     
     if (error) {
-      console.error('Error updating profile:', error);
       return res.status(400).json({ error: error.message });
     }
     
@@ -99,10 +104,10 @@ router.put('/profile', authenticateUser, async (req, res) => {
       id: data.id,
       name: data.name,
       email: data.email,
+      profilePicture: data.profile_picture || null,
+      dietaryPreferences: data.dietary_preferences || [],
       createdAt: data.created_at
     };
-    
-    console.log('Profile updated successfully');
     
     res.json({ 
       success: true, 
@@ -117,3 +122,4 @@ router.put('/profile', authenticateUser, async (req, res) => {
 });
 
 export default router;
+ 
