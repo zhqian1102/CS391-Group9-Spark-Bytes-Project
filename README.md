@@ -155,34 +155,34 @@ CS391-Group9-Spark-Bytes-Project/
 
 ## Current Features
 
-### Authentication & Accounts
+### ✅ Authentication & Accounts
 - BU-only email validation with password strength rules.
 - Two-step email verification with 6-digit codes (resend + 10-minute expiry).
 - Supabase Auth integration with JWT-based sessions; localStorage fallback for quick demos.
 - Profile data persisted in Supabase when configured.
 
-### Users & Roles
+### ✅ Users & Roles
 - Student and Event Organizer flows.
 - Profile viewing/management and logout from the profile dropdown.
 
-### Events & Reservations
+### ✅ Events & Reservations
 - Event creation with title, description, location, date, time, food items, capacity, and dietary tags.
 - Optional image uploads with graceful handling for failures.
 - Event feed showing availability, capacity, dietary tags, and remaining spots.
 - Detail modals for registration/cancellation and attendee management for organizers.
 
-### Dashboard & Navigation
+### ✅ Dashboard & Navigation
 - Personalized dashboard showing reserved events and quick actions.
 - Reusable navigation bar with logo, search, links, alerts toggle, and profile dropdown.
 - Mobile-ready layouts with smooth transitions and BU gradient theming.
 
-### Backend & API
+### ✅ Backend & API
 - Express API with auth, events, and profile routes.
 - JWT middleware for protected routes.
 - Nodemailer-based email delivery for verification codes.
 - Supabase service role integration for secure database access.
 
-## Future Enhancements
+## ✏️ Future Enhancements
 
 - Admin dashboard
 - Push notifications for mobile
