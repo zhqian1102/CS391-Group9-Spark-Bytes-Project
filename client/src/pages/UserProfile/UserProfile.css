@@ -101,7 +101,90 @@
   .card-icon {
     font-size: 24px;
   }
-  
+   /* Profile Picture Section */
+.profile-picture-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.profile-picture-container {
+  width: 250px;
+  height: 250px;
+  margin-bottom: 15px;
+  position: relative;
+}
+
+.profile-picture {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #e0e0e0;
+}
+
+.profile-picture-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #cc0000 0%, #a00000 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  font-weight: 700;
+  color: white;
+  border: 4px solid #e0e0e0;
+}
+
+.profile-picture-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.upload-btn {
+  padding: 10px 20px;
+  background-color: #f0f0f0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: 2px solid #e0e0e0;
+}
+
+.upload-btn:hover {
+  background-color: #e0e0e0;
+  border-color: #cc0000;
+}
+
+.remove-photo-btn {
+  padding: 8px 16px;
+  background-color: transparent;
+  color: #dc3545;
+  border: 2px solid #dc3545;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.remove-photo-btn:hover {
+  background-color: #dc3545;
+  color: white;
+}
+
+.upload-hint {
+  font-size: 12px;
+  color: #999;
+  margin: 0;
+}
   /* Form Elements */
   .form-group {
     margin-bottom: 20px;
