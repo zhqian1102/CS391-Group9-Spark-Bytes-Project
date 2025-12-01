@@ -110,14 +110,24 @@ const NavigationBar = () => {
           <span>🔔</span>
         </button>
 
-        {/* Profile Dropdown */}
+       {/* Profile Dropdown with Picture */}
         <div className="profile-dropdown-container">
           <button
-            className="icon-button profile-button"
+            className="profile-picture-button"
             onClick={toggleProfile}
-            title="Profile"
+            title={user?.name || "Profile"}
           >
-            <span>👤</span>
+            {user?.profilePicture ? (
+              <img 
+                src={user.profilePicture} 
+                alt="Profile" 
+                className="navbar-profile-pic"
+              />
+            ) : (
+              <div className="navbar-profile-placeholder">
+                {getInitials()}
+              </div>
+            )}
           </button>
 
           {showProfile && (
