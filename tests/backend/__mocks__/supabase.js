@@ -107,7 +107,25 @@ class QueryBuilder {
     const filtered = applyFilters(rows, this.filters);
 
     if (this.action === "select") {
-      const ordered = applyOrdering(filtered, this.ordering);
+      let ordered = applyOrdering(filtered, this.ordering);
+
+      // Basic support for the profiles used in getEventAttendees
+      if (
+        this.table === "event_attendees" &&
+        typeof this.columns === "string" &&
+        this.columns.includes("profiles!inner")
+      ) {
+        ordered = ordered
+          .map((row) => {
+            const profile = tables.profiles.find(
+              (p) => String(p.id) === String(row.user_id)
+            );
+            if (!profile) return null; // inner join drops rows without profile
+            return { ...row, profiles: { ...profile } };
+          })
+          .filter(Boolean);
+      }
+
       const data = this.singleRow ? ordered[0] || null : ordered;
       return {
         data,
@@ -138,8 +156,16 @@ class QueryBuilder {
         updated.push(merged);
         return merged;
       });
-      const data = this.returning ? updated : null;
-      return { data, error: null };
+
+      const data = this.singleRow
+        ? this.returning
+          ? updated[0] || null
+          : null
+        : this.returning
+        ? updated
+        : null;
+      const error = this.singleRow && !data ? new Error("No rows") : null;
+      return { data, error };
     }
 
     if (this.action === "delete") {

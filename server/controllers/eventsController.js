@@ -467,9 +467,6 @@ export const getEventAttendees = async (req, res) => {
     const user_id = req.profile?.id;
     const { eventId } = req.params;
 
-    // console.log("   • eventId:", eventId);
-    // console.log("   • logged-in user (req.user.id):", user_id);
-
     const { data: event, error: eventError } = await supabase
       .from("events")
       .select("user_id")
@@ -481,7 +478,6 @@ export const getEventAttendees = async (req, res) => {
     }
 
     if (String(event.user_id) !== String(user_id)) {
-      console.log("Owner mismatch:", event.user_id, user_id);
       return res.status(403).json({ error: "Unauthorized: Not your event" });
     }
 

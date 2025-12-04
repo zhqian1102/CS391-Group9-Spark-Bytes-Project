@@ -30,6 +30,7 @@
     "nodemailer": "^7.0.10"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "concurrently": "^8.0.1",
     "jest": "^30.2.0",
     "nodemon": "^2.0.22",
