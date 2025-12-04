@@ -9,7 +9,6 @@ import supabase, { APP_API_URL } from "../../config/supabase.js";
 import { useLocation } from "react-router-dom";
 
 const API_URL = APP_API_URL;
-// console.log("API_URL:", API_URL);
 
 const EventsPage = () => {
   const navigate = useNavigate();
@@ -56,8 +55,6 @@ const EventsPage = () => {
         const params = new URLSearchParams(location.search);
         const search = params.get("search") || "";
 
-        // Fetch events
-        console.log("Fetching events..."); // ADD THIS
         const eventsRes = await fetch(
           `${API_URL}/api/events${
             search ? `?search=${encodeURIComponent(search)}` : ""
@@ -68,29 +65,24 @@ const EventsPage = () => {
         );
 
         if (!eventsRes.ok) {
-          console.error("Events fetch failed:", eventsRes.status); // ADD THIS
+          console.error("Events fetch failed:", eventsRes.status);
           throw new Error("Failed to load events");
         }
 
         const eventsData = await eventsRes.json();
-        console.log("Events data:", eventsData); // ADD THIS
         let fetchedEvents = eventsData.events || [];
 
         // Fetch reserved events
-        console.log("Fetching reserved events..."); // ADD THIS
         const reservedRes = await fetch(`${API_URL}/api/events/reserved/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        console.log("Reserved response status:", reservedRes.status); // ADD THIS
-
         let reservedIds = [];
         if (reservedRes.ok) {
           const reservedData = await reservedRes.json();
-          console.log("Reserved data:", reservedData); // ADD THIS
           reservedIds = reservedData.reservedEventIds || [];
         } else {
-          console.error("Reserved fetch failed:", await reservedRes.text()); // ADD THIS
+          console.error("Reserved fetch failed:", await reservedRes.text());
         }
 
         // Merge reserved status
@@ -98,19 +90,17 @@ const EventsPage = () => {
           const isReserved = reservedIds.some(
             (rid) => String(rid) === String(e.id)
           );
-          console.log(`Event ${e.id} reserved:`, isReserved);
           return {
             ...e,
             isReserved,
           };
         });
 
-        console.log("Merged events:", merged); // ADD THIS
         setEvents(merged);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching events:", err);
-        setLoading(false); // ADD THIS - This was missing!
+        setLoading(false);
       }
     };
 
@@ -171,13 +161,12 @@ const EventsPage = () => {
             ? {
                 ...event,
                 isReserved: true,
-                attendees_count: (event.attendees_count || 0) + 1, // fallback if backend didn't send spotsLeft
+                attendees_count: (event.attendees_count || 0) + 1,
               }
             : event
         )
       );
 
-      // If modal is open, update selected event too
       if (selectedEvent?.id === eventId) {
         setSelectedEvent((prev) => ({
           ...prev,

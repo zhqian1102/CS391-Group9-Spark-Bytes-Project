@@ -145,8 +145,6 @@ export default function PostEvent() {
         image_urls: imageUrls,
       };
 
-      console.log("Submitting event:", newEvent);
-
       // Send to backend
       const res = await fetch(`${API_URL}/api/events`, {
         method: "POST",
