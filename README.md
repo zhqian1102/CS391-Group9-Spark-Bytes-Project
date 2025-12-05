@@ -6,16 +6,17 @@ A platform for Boston University students and faculty members to post events tha
 
 ## 📚 Documentation & Setup Guides
 
-| Guide | Description |
-|-------|-------------|
-| 📖 [**Backend Setup Guide**](./BACKEND-SETUP-GUIDE.md) | **START HERE!** Complete guide to get the backend running |
-| 📧 [**Email Verification Setup**](./EMAIL-VERIFICATION-SETUP.md) | Configure email verification with Gmail for user registration |
-| 🗄️ [**Supabase Integration**](./SUPABASE-INTEGRATION-GUIDE.md) | Set up cloud database and authentication |
-| 🔧 [**Supabase Setup (Quick)**](./SUPABASE-SETUP.md) | Quick start guide for Supabase configuration |
-| 📝 [**Changes Summary**](./CHANGES-SUMMARY.md) | Detailed technical documentation of recent updates |
-| 💾 [**SQL Schema**](./SUPABASE-USERS-TABLE-SETUP.sql) | Database table setup script |
+| Guide                                                                            | Description                                                   |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| 📖 [**Backend Setup Guide**](./BACKEND-SETUP-GUIDE.md)                           | **START HERE!** Complete guide to get the backend running     |
+| 📧 [**Email Verification Setup**](./EMAIL-VERIFICATION-SETUP.md)                 | Configure email verification with Gmail for user registration |
+| 🗄️ [**Supabase Integration**](./SUPABASE-INTEGRATION-GUIDE.md)                   | Set up cloud database and authentication                      |
+| 🔧 [**Supabase Setup (Quick)**](./SUPABASE-SETUP.md)                             | Quick start guide for Supabase configuration                  |
+| 💾 [**SQL Schema**](./SUPABASE-USERS-TABLE-SETUP.sql)                            | Database table setup script                                   |
+| 🧪 [**Testing (Backend + Frontend)**](<./Testing%20(Backend%20+%20Frontend).md>) | How to run and interpret backend and frontend test suites     |
 
 **👉 First time setup?** Follow these guides in order:
+
 1. **[Backend Setup Guide](./BACKEND-SETUP-GUIDE.md)** (start here!) → 2. [Email Verification](./EMAIL-VERIFICATION-SETUP.md) → 3. [Supabase Integration](./SUPABASE-INTEGRATION-GUIDE.md)
 
 ---
@@ -95,6 +96,7 @@ Without Supabase, the app uses browser localStorage (data clears on logout).
 **Problem:** Backend server is not running.
 
 **Solution:**
+
 ```bash
 # From project root
 npm start
@@ -111,12 +113,14 @@ The backend MUST be running on `http://localhost:5001` for the app to work!
 **Problem:** Error says port 5001 is already in use.
 
 **Solution (Mac/Linux):**
+
 ```bash
 lsof -ti:5001 | xargs kill -9
 npm start
 ```
 
 **Solution (Windows):**
+
 ```powershell
 Get-Process -Id (Get-NetTCPConnection -LocalPort 5001).OwningProcess | Stop-Process
 npm start
@@ -125,6 +129,7 @@ npm start
 ### Module Not Found Errors
 
 **Solution:**
+
 ```bash
 rm -rf node_modules package-lock.json
 npm run install-all
@@ -156,27 +161,32 @@ CS391-Group9-Spark-Bytes-Project/
 ## Current Features
 
 ### ✅ Authentication & Accounts
+
 - BU-only email validation with password strength rules.
 - Two-step email verification with 6-digit codes (resend + 10-minute expiry).
 - Supabase Auth integration with JWT-based sessions; localStorage fallback for quick demos.
 - Profile data persisted in Supabase when configured.
 
 ### ✅ Users & Roles
+
 - Student and Event Organizer flows.
 - Profile viewing/management and logout from the profile dropdown.
 
 ### ✅ Events & Reservations
+
 - Event creation with title, description, location, date, time, food items, capacity, and dietary tags.
 - Optional image uploads with graceful handling for failures.
 - Event feed showing availability, capacity, dietary tags, and remaining spots.
 - Detail modals for registration/cancellation and attendee management for organizers.
 
 ### ✅ Dashboard & Navigation
+
 - Personalized dashboard showing reserved events and quick actions.
 - Reusable navigation bar with logo, search, links, alerts toggle, and profile dropdown.
 - Mobile-ready layouts with smooth transitions and BU gradient theming.
 
 ### ✅ Backend & API
+
 - Express API with auth, events, and profile routes.
 - JWT middleware for protected routes.
 - Nodemailer-based email delivery for verification codes.
@@ -202,7 +212,9 @@ Shu (Ivy) Shi
 Liting Zheng
 
 =======
+
 ## Figma Design
+
 https://www.figma.com/design/II4Fde0YNereD6PHAr4e4W/First-Draft?node-id=0-1&t=qFtx8SNI9xJzuD6v-1
 
 # CS391-Group9-Spark-Bytes-Project
