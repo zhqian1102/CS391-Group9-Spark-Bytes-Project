@@ -67,6 +67,7 @@ const UserDashboard = () => {
         setLoading(false);
       } catch (err) {
         console.error("Error loading reserved events:", err);
+        alert(err.message || "Failed to load reserved events.");
         setLoading(false);
       }
     };

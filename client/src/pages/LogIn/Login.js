@@ -67,7 +67,7 @@ const Login = () => {
 
       if (isLogin) {
         result = await login(formData.email, formData.password);
-        
+
         if (result.success) {
           alert(`Login successful! Welcome back, ${result.user.name}!`);
           navigate("/events");
@@ -91,7 +91,18 @@ const Login = () => {
         } else if (result.success) {
           // Direct success (Supabase flow)
           alert(result.message || "Registration successful!");
-          navigate("/events");
+          setIsLogin(true);
+          setShowVerification(false); //for link to login after signup
+          setVerificationCode("");
+          setPendingEmail("");
+          setFormData({
+            email: "",
+            password: "",
+            confirmPassword: "",
+            name: "",
+            userType: "student",
+          });
+          navigate("/login");
         } else {
           setError(result.error);
         }
@@ -213,7 +224,9 @@ const Login = () => {
               <div className="verification-message">
                 <p>📧 We've sent a verification code to:</p>
                 <strong>{pendingEmail}</strong>
-                <p style={{ marginTop: "10px", fontSize: "14px", color: "#666" }}>
+                <p
+                  style={{ marginTop: "10px", fontSize: "14px", color: "#666" }}
+                >
                   Please check your email and enter the 6-digit code below.
                 </p>
               </div>
@@ -225,18 +238,18 @@ const Login = () => {
                   name="verificationCode"
                   value={verificationCode}
                   onChange={(e) => {
-                    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                    const value = e.target.value.replace(/\D/g, "").slice(0, 6);
                     setVerificationCode(value);
                     setError("");
                   }}
                   placeholder="Enter 6-digit code"
                   required
                   maxLength="6"
-                  style={{ 
-                    fontSize: "24px", 
-                    letterSpacing: "10px", 
+                  style={{
+                    fontSize: "24px",
+                    letterSpacing: "10px",
                     textAlign: "center",
-                    fontWeight: "bold"
+                    fontWeight: "bold",
                   }}
                 />
               </div>
@@ -255,7 +268,7 @@ const Login = () => {
                     color: "#4CAF50",
                     cursor: "pointer",
                     textDecoration: "underline",
-                    marginTop: "10px"
+                    marginTop: "10px",
                   }}
                 >
                   Didn't receive the code? Resend
@@ -270,7 +283,7 @@ const Login = () => {
                     border: "none",
                     color: "#666",
                     cursor: "pointer",
-                    fontSize: "14px"
+                    fontSize: "14px",
                   }}
                 >
                   ← Back to Sign Up
@@ -280,70 +293,70 @@ const Login = () => {
           ) : (
             // Regular Login/Sign Up Form
             <form className="login-form" onSubmit={handleSubmit}>
-            {!isLogin && (
+              {!isLogin && (
+                <div className="form-group">
+                  <label htmlFor="name">Full Name</label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Enter your full name"
+                    required={!isLogin}
+                  />
+                </div>
+              )}
               <div className="form-group">
-                <label htmlFor="name">Full Name</label>
+                <label htmlFor="email">BU Email</label>
                 <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
                   onChange={handleChange}
-                  placeholder="Enter your full name"
-                  required={!isLogin}
+                  placeholder="yourname@bu.edu"
+                  required
                 />
               </div>
-            )}
-            <div className="form-group">
-              <label htmlFor="email">BU Email</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="yourname@bu.edu"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="password">Password</label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Enter your password"
-                required
-                minLength="6"
-              />
-            </div>
-            {!isLogin && (
               <div className="form-group">
-                <label htmlFor="confirmPassword">Confirm Password</label>
+                <label htmlFor="password">Password</label>
                 <input
                   type="password"
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
+                  id="password"
+                  name="password"
+                  value={formData.password}
                   onChange={handleChange}
-                  placeholder="Re-enter your password"
-                  required={!isLogin}
+                  placeholder="Enter your password"
+                  required
                   minLength="6"
                 />
               </div>
-            )}
-            {error && <div className="error-message">{error}</div>}
-            <button type="submit" className="submit-btn" disabled={loading}>
-              {loading ? "Loading..." : isLogin ? "Login" : "Create Account"}
-            </button>
-            {isLogin && (
-              <div className="forgot-password">
-                <a href="#forgot">Forgot password?</a>
-              </div>
-            )}
-          </form>
+              {!isLogin && (
+                <div className="form-group">
+                  <label htmlFor="confirmPassword">Confirm Password</label>
+                  <input
+                    type="password"
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    placeholder="Re-enter your password"
+                    required={!isLogin}
+                    minLength="6"
+                  />
+                </div>
+              )}
+              {error && <div className="error-message">{error}</div>}
+              <button type="submit" className="submit-btn" disabled={loading}>
+                {loading ? "Loading..." : isLogin ? "Login" : "Create Account"}
+              </button>
+              {isLogin && (
+                <div className="forgot-password">
+                  <a href="#forgot">Forgot password?</a>
+                </div>
+              )}
+            </form>
           )}
 
           <div className="info-section">

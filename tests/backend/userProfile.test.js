@@ -1,12 +1,15 @@
-import { beforeEach, describe, expect, jest, test } from "@jest/globals";
+import { beforeAll, beforeEach, describe, expect, jest, test } from "@jest/globals";
 import express from "express";
 import request from "supertest";
 
-// Use the Supabase manual mock
-const supabaseMockModule = await import("./__mocks__/supabase.js");
-jest.unstable_mockModule("../../server/config/supabase.js", () => ({
-  default: supabaseMockModule.default,
-}));
+let supabaseMockModule;
+
+beforeAll(async () => {
+  supabaseMockModule = await import("./__mocks__/supabase.js");
+  jest.unstable_mockModule("../../server/config/supabase.js", () => ({
+    default: supabaseMockModule.default,
+  }));
+});
 
 const createApp = async () => {
   jest.resetModules();

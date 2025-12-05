@@ -28,7 +28,7 @@ try {
   if (fs.existsSync(USERS_FILE)) {
     const data = fs.readFileSync(USERS_FILE, "utf8");
     users = JSON.parse(data);
-    console.log(`📚 Loaded ${users.length} users from storage`);
+    // console.log(`📚 Loaded ${users.length} users from storage`);
   }
 } catch (error) {
   console.error("Error loading users:", error);
@@ -157,16 +157,14 @@ router.post("/verify-email", async (req, res) => {
     // Check if code has expired
     if (Date.now() > verificationData.expiresAt) {
       verificationCodes.delete(email);
-      return res
-        .status(400)
-        .json({ message: "Verification code has expired. Please register again." });
+      return res.status(400).json({
+        message: "Verification code has expired. Please register again.",
+      });
     }
 
     // Verify the code
     if (verificationData.code !== code) {
-      return res
-        .status(400)
-        .json({ message: "Invalid verification code" });
+      return res.status(400).json({ message: "Invalid verification code" });
     }
 
     // Code is valid, create the user account
@@ -176,15 +174,16 @@ router.post("/verify-email", async (req, res) => {
     if (supabase) {
       try {
         // Create user in Supabase Auth
-        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-          email,
-          password,
-          email_confirm: true, // Mark email as confirmed
-          user_metadata: {
-            name,
-            userType
-          }
-        });
+        const { data: authData, error: authError } =
+          await supabase.auth.admin.createUser({
+            email,
+            password,
+            email_confirm: true, // Mark email as confirmed
+            user_metadata: {
+              name,
+              userType,
+            },
+          });
 
         if (authError) {
           console.error("Supabase auth error:", authError);
@@ -193,7 +192,7 @@ router.post("/verify-email", async (req, res) => {
 
         // Also store in custom users table for easy querying
         const { data: userData, error: dbError } = await supabase
-          .from('users')
+          .from("users")
           .insert([
             {
               id: authData.user.id,
@@ -201,8 +200,8 @@ router.post("/verify-email", async (req, res) => {
               name,
               user_type: userType,
               email_verified: true,
-              created_at: new Date().toISOString()
-            }
+              created_at: new Date().toISOString(),
+            },
           ])
           .select()
           .single();
@@ -231,11 +230,14 @@ router.post("/verify-email", async (req, res) => {
             id: authData.user.id,
             name,
             email,
-            userType
+            userType,
           },
         });
       } catch (supabaseError) {
-        console.error("Supabase error, falling back to local storage:", supabaseError);
+        console.error(
+          "Supabase error, falling back to local storage:",
+          supabaseError
+        );
         // Fall through to local storage
       }
     }
@@ -268,7 +270,7 @@ router.post("/verify-email", async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    console.log("✅ User created in local storage:", email);
+    // console.log("✅ User created in local storage:", email);
 
     return res.status(201).json({
       message: "Email verified and user registered successfully",
@@ -362,22 +364,23 @@ router.post("/login", async (req, res) => {
     if (supabase) {
       try {
         // Authenticate with Supabase
-        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-          email,
-          password
-        });
+        const { data: authData, error: authError } =
+          await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
 
         if (!authError && authData.user) {
           // Get additional user data from users table
           const { data: userData, error: dbError } = await supabase
-            .from('users')
-            .select('*')
-            .eq('email', email)
+            .from("users")
+            .select("*")
+            .eq("email", email)
             .single();
 
           const user = userData || {
-            name: authData.user.user_metadata?.name || email.split('@')[0],
-            user_type: authData.user.user_metadata?.userType || 'student'
+            name: authData.user.user_metadata?.name || email.split("@")[0],
+            user_type: authData.user.user_metadata?.userType || "student",
           };
 
           // Generate JWT token
@@ -396,12 +399,15 @@ router.post("/login", async (req, res) => {
               id: authData.user.id,
               name: user.name,
               email: authData.user.email,
-              userType: user.user_type || user.userType || 'student',
+              userType: user.user_type || user.userType || "student",
             },
           });
         }
       } catch (supabaseError) {
-        console.error("Supabase login error, trying local storage:", supabaseError);
+        console.error(
+          "Supabase login error, trying local storage:",
+          supabaseError
+        );
         // Fall through to local storage
       }
     }
@@ -429,7 +435,7 @@ router.post("/login", async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    console.log("✅ User logged in via local storage:", email);
+    // console.log("✅ User logged in via local storage:", email);
 
     return res.json({
       message: "Login successful",

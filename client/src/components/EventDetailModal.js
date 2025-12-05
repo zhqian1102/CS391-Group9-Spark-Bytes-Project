@@ -47,6 +47,7 @@ const EventDetailModal = ({ event, open, onClose, onReserve }) => {
       await onReserve?.(event.id);
     } catch (error) {
       console.error("Reservation failed:", error);
+      alert("Failed to reserve this event. Please try again.");
     } finally {
       setIsReserving(false);
     }

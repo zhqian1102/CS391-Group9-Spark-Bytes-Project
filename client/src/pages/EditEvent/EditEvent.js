@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import NavigationBar from "../../components/NavigationBar";
-import Footer from "../../components/Footer";
+import NavigationBar from "../../components/NavigationBar.js";
+import Footer from "../../components/Footer.js";
 import "../PostEvent/PostEvent.css";
 import { useNavigate, useParams } from "react-router-dom";
 import supabase, { APP_API_URL } from "../../config/supabase.js";
@@ -30,85 +30,82 @@ export default function EditEventPage() {
   const totalImages = existingImages.length + newImagePreviews.length;
 
   useEffect(() => {
-  async function fetchEvent() {
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+    async function fetchEvent() {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
-      if (!session) {
-        alert("You must be logged in.");
-        navigate("/login");
-        return;
+        if (!session) {
+          alert("You must be logged in.");
+          navigate("/login");
+          return;
+        }
+
+        const token = session.access_token;
+
+        const res = await fetch(`${API_URL}/api/events/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) {
+          alert("Failed to load event.");
+          navigate("/events");
+          return;
+        }
+
+        const event = await res.json();
+        setTitle(event.title || "");
+        setLocation(event.location || "");
+        setDate(event.date || "");
+        setTime(event.time || "");
+        setCapacity(event.capacity || "");
+        setPickupInstructions(event.pickup_instructions || "");
+        setDescription(event.description || "");
+        setFoodList(event.food_items || [{ item: "", qty: "" }]);
+        setSelectedDietary(event.dietary_options || []);
+        setExistingImages(event.image_urls || []);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error loading event:", error);
+        alert("An error occurred while loading the event.");
+        setLoading(false);
       }
-
-      const token = session.access_token;
-
-      const res = await fetch(`${API_URL}/api/events/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) {
-        alert("Failed to load event.");
-        navigate("/events");
-        return;
-      }
-
-      const event = await res.json();
-      setTitle(event.title || "");
-      setLocation(event.location || "");
-      setDate(event.date || "");
-      setTime(event.time || "");
-      setCapacity(event.capacity || "");
-      setPickupInstructions(event.pickup_instructions || "");
-      setDescription(event.description || "");
-      setFoodList(event.food_items || [{ item: "", qty: "" }]);
-      setSelectedDietary(event.dietary_options || []);
-      setExistingImages(event.image_urls || []);
-      setLoading(false);
-    } catch (error) {
-      console.error("Error loading event:", error);
-      alert("An error occurred while loading the event.");
-      setLoading(false);
     }
-  }
 
-  fetchEvent();
-}, [id, navigate]);  
-
-
+    fetchEvent();
+  }, [id, navigate]);
 
   useEffect(() => {
     return () => {
-      newImagePreviews.forEach(url => URL.revokeObjectURL(url));
+      newImagePreviews.forEach((url) => URL.revokeObjectURL(url));
     };
   }, [newImagePreviews]);
 
-    const handleAdd = () => setFoodList([...foodList, { item: "", qty: "" }]);
+  const handleAdd = () => setFoodList([...foodList, { item: "", qty: "" }]);
 
-    const handleChange = (index, field, value) => {
+  const handleChange = (index, field, value) => {
     const updated = [...foodList];
     updated[index][field] = value;
     setFoodList(updated);
-    };
+  };
 
-    const handleDietaryToggle = (tag) => {
+  const handleDietaryToggle = (tag) => {
     setSelectedDietary((prev) =>
-        prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
-    };
+  };
 
-
-    const handleRemoveExistingImage = (index) => {
-    setExistingImages(prev => prev.filter((_, i) => i !== index));
+  const handleRemoveExistingImage = (index) => {
+    setExistingImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleRemoveNewImage = (index) => {
     URL.revokeObjectURL(newImagePreviews[index]);
-    setNewImageFiles(prev => prev.filter((_, i) => i !== index));
-    setNewImagePreviews(prev => prev.filter((_, i) => i !== index));
+    setNewImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setNewImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleImageChange = (e) => {
@@ -116,12 +113,14 @@ export default function EditEventPage() {
     const remainingSlots = MAX_IMAGES - totalImages;
 
     if (files.length > remainingSlots) {
-      alert(`You can only upload ${remainingSlots} more image(s). Maximum is ${MAX_IMAGES} images total.`);
+      alert(
+        `You can only upload ${remainingSlots} more image(s). Maximum is ${MAX_IMAGES} images total.`
+      );
       return;
     }
 
-    const validFiles = files.filter(file => {
-      if (!file.type.startsWith('image/')) {
+    const validFiles = files.filter((file) => {
+      if (!file.type.startsWith("image/")) {
         alert(`${file.name} is not an image file`);
         return false;
       }
@@ -130,19 +129,21 @@ export default function EditEventPage() {
 
     if (validFiles.length === 0) return;
 
-    const newPreviews = validFiles.map(file => URL.createObjectURL(file));
+    const newPreviews = validFiles.map((file) => URL.createObjectURL(file));
 
-    setNewImageFiles(prev => [...prev, ...validFiles]);
-    setNewImagePreviews(prev => [...prev, ...newPreviews]);
+    setNewImageFiles((prev) => [...prev, ...validFiles]);
+    setNewImagePreviews((prev) => [...prev, ...newPreviews]);
 
-    e.target.value = '';
+    e.target.value = "";
   };
 
   const uploadImagesToSupabase = async (files) => {
     const uploadedUrls = [];
 
     for (const file of files) {
-      const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${file.name}`;
+      const fileName = `${Date.now()}_${Math.random()
+        .toString(36)
+        .substr(2, 9)}_${file.name}`;
       const { error } = await supabase.storage
         .from("event_images")
         .upload(fileName, file);
@@ -170,6 +171,29 @@ export default function EditEventPage() {
 
     if (!session) {
       alert("You must be logged in.");
+      return;
+    }
+
+    const requiredFieldsFilled =
+      title &&
+      location &&
+      date &&
+      time &&
+      capacity &&
+      foodList[0]?.item &&
+      foodList[0]?.qty &&
+      selectedDietary.length > 0;
+
+    if (!requiredFieldsFilled) {
+      alert(
+        "Please complete all required fields, including title, location, date, time, capacity, food items, and at least one dietary option."
+      );
+      return;
+    }
+
+    const hasMeridiem = /\b(am|pm)\b/i.test(time);
+    if (!hasMeridiem) {
+      alert("Time must include AM or PM (e.g., 3:00 PM).");
       return;
     }
 
@@ -229,7 +253,6 @@ export default function EditEventPage() {
         <h1 className="post-page-title">Edit Event</h1>
 
         <form className="post-form" onSubmit={handleSave}>
-
           <div className="form-group">
             <label>Event Title *</label>
             <input
@@ -242,7 +265,11 @@ export default function EditEventPage() {
 
           <div className="form-group">
             <label>Location *</label>
-            <select value={location} onChange={(e) => setLocation(e.target.value)} required>
+            <select
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              required
+            >
               <option value="">Select location *</option>
               <option value="CAS">CAS</option>
               <option value="CDS">CDS</option>
@@ -257,15 +284,24 @@ export default function EditEventPage() {
           <div className="form-row-date-time">
             <div className="form-group">
               <label>Date *</label>
-              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                required
+              />
             </div>
 
             <div className="form-group">
               <label>Time *</label>
-              <input type="text" value={time} onChange={(e) => setTime(e.target.value)} required />
+              <input
+                type="text"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                required
+              />
             </div>
           </div>
-
 
           <div className="food-section">
             <div className="form-row">
@@ -283,7 +319,9 @@ export default function EditEventPage() {
                   <input
                     type="text"
                     value={food.item}
-                    onChange={(e) => handleChange(index, "item", e.target.value)}
+                    onChange={(e) =>
+                      handleChange(index, "item", e.target.value)
+                    }
                   />
                 </div>
                 <div className="form-group">
@@ -328,7 +366,9 @@ export default function EditEventPage() {
                 <button
                   type="button"
                   key={tag}
-                  className={`dietary-tag ${selectedDietary.includes(tag) ? "selected" : ""}`}
+                  className={`dietary-tag ${
+                    selectedDietary.includes(tag) ? "selected" : ""
+                  }`}
                   onClick={() => handleDietaryToggle(tag)}
                 >
                   {tag}
@@ -336,15 +376,15 @@ export default function EditEventPage() {
               ))}
             </div>
           </div>
-          
+
           <div className="form-group">
             <label>Event Images * (Max {MAX_IMAGES})</label>
-            
+
             <div className="image-grid">
               {existingImages.map((url, idx) => (
                 <div key={`existing-${idx}`} className="image-container">
-                  <img 
-                    src={url} 
+                  <img
+                    src={url}
                     alt={`Event ${idx + 1}`}
                     className="image-preview"
                   />
@@ -361,8 +401,8 @@ export default function EditEventPage() {
 
               {newImagePreviews.map((preview, idx) => (
                 <div key={`new-${idx}`} className="image-container">
-                  <img 
-                    src={preview} 
+                  <img
+                    src={preview}
                     alt={`New ${idx + 1}`}
                     className="image-preview new-image"
                   />
@@ -389,10 +429,7 @@ export default function EditEventPage() {
                   onChange={handleImageChange}
                   className="image-upload-input"
                 />
-                <label 
-                  htmlFor="image-upload"
-                  className="image-upload-label"
-                >
+                <label htmlFor="image-upload" className="image-upload-label">
                   Add Images ({totalImages}/{MAX_IMAGES})
                 </label>
               </div>
@@ -407,23 +444,34 @@ export default function EditEventPage() {
 
           <div className="form-group">
             <label>Pickup Instructions</label>
-            <input type="text" value={pickupInstructions} onChange={(e) => setPickupInstructions(e.target.value)} />
+            <input
+              type="text"
+              value={pickupInstructions}
+              onChange={(e) => setPickupInstructions(e.target.value)}
+            />
           </div>
 
           <div className="form-group">
             <label>Event Description</label>
-            <textarea rows="4" value={description} onChange={(e) => setDescription(e.target.value)} />
+            <textarea
+              rows="4"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
           </div>
 
           <div className="form-buttons">
-            <button type="button" className="btn-secondary" onClick={() => navigate("/organizerdashboard")}>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => navigate("/organizerdashboard")}
+            >
               Close
             </button>
             <button type="submit" className="btn-primary">
               Save Changes
             </button>
           </div>
-
         </form>
       </main>
 

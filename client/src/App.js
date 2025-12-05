@@ -7,7 +7,7 @@ import EventsPage from "./pages/Events/EventsPage";
 import UserDashboard from "./pages/Dashboard/UserDashboard";
 import OrganizerDashboard from "./pages/Dashboard/OrganizerDashboard";
 import PostEvent from "./pages/PostEvent/PostEvent";
-import NotificationPage from "./components/NotificationPage";
+import NotificationPage from "./pages/Notification/NotificationPage";
 import AboutPage from "./pages/About/AboutPage";
 import UserProfile from "./pages/UserProfile/UserProfile";
 import EditEventPage from "./pages/EditEvent/EditEvent";

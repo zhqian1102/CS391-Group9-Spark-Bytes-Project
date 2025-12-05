@@ -1,4 +1,4 @@
-# Test README (Backend + Frontend)
+# Testing (Backend + Frontend)
 
 This repository uses a Jest multi-project config:
 
@@ -20,16 +20,9 @@ npm install -D jest supertest @testing-library/react @testing-library/jest-dom
 ## Running tests
 
 - All backend + frontend: `npm test`
-- Frontend (all): `npm test -- --selectProjects frontend`
-- Frontend single file: `npm test -- --selectProjects frontend client/src/pages/pageFolder/pageFile.test.js`
-- Backend (all): `npm test -- --selectProjects backend`
-- Backend single file: `npm test -- --selectProjects backend tests/backend/testPage.test.js`
-
-Notes:
-
-- The project is ESM; the `test` script already sets `NODE_OPTIONS=--experimental-vm-modules`.
-- Frontend tests use jsdom and CRA’s Babel preset (configured in `jest.frontend.config.js`).
-- In restricted environments, backend tests that bind to a port via supertest may need elevated permissions; if blocked, run frontend-only or allow binding.
+- Frontend (all): `npm test -- client  `
+- Backend (all): `npm test -- backend`
+- One single file: `npm test -- path/of/targetfile.test.js`
 
 ## Backend test files (tests/backend)
 
@@ -50,3 +43,11 @@ Supabase mock helpers:
 
 - `EventsPage.test.js`: Fetch/merge reserved events, reserved/full states, filtering/search, modal open behavior, no-results message.
 - `PostEvent.test.js`: Form validation (required fields, AM/PM, images, date) and submission flow.
+- `EditEvent.test.js`: Edit validation (required fields, AM/PM, images required/max, login gating, load/save errors), dietary toggles, food rows, image removal/upload.
+- `OrganizerDashboard.test.js`: Edit navigation, delete success/error alerts, category grouping.
+- `UserDashboard.test.js`: Reserved fetch (upcoming only), load/cancel success/error alerts.
+- `ViewAttendees.test.js`: Attendee fetch success, owner/403 error, missing session, export alert on empty.
+- `NotificationPage.test.js`: Unauth error, fetch success, fetch failure.
+- `Login.test.js`: BU email validation, mismatched passwords, login success nav, signup verification flow, direct signup success to login, invalid verification code error.
+- `UserProfile.test.js`: Redirect when unauthenticated, edit/save success/error, logout navigation.
+- `EventDetailModal.test.js`: Renders modal content, map, carousel navigation, reserve success/failure, reserved disable, backdrop/Escape close, image controls, body scroll lock.

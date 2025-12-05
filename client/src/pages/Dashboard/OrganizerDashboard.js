@@ -37,7 +37,6 @@ const OrganizerDashboard = () => {
       const result = await response.json();
 
       if (response.ok) {
-        console.log("Fetched events", result);
         setPostedEvents(result.posted || []);
       } else {
         console.error("Error loading events:", result.error);
