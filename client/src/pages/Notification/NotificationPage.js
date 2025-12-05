@@ -1,9 +1,9 @@
 // NotificationPage.js
 import React, { useState, useEffect } from "react";
 import "./NotificationPage.css";
-import NavigationBar from "./NavigationBar";
-import Footer from "./Footer";
-import { useAuth } from "../context/AuthContext";
+import NavigationBar from "../../components/NavigationBar";
+import Footer from "../../components/Footer";
+import { useAuth } from "../../context/AuthContext";
 
 const NotificationPage = () => {
   // Sample notification data, will be fetched from backend API later
@@ -67,12 +67,14 @@ const NotificationPage = () => {
   }, [userId]);
 
   // Fetch notifications from backend
+  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5001";
+
   const fetchNotifications = async () => {
     try {
       setLoading(true);
 
       const response = await fetch(
-        `http://localhost:5001/api/notifications/user/${userId}`,
+        `${API_URL}/api/notifications/user/${userId}`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -98,7 +100,7 @@ const NotificationPage = () => {
   const handleMarkAllAsRead = async () => {
     try {
       const response = await fetch(
-        `http://localhost:5001/api/notifications/user/${userId}/read-all`,
+        `${API_URL}/api/notifications/user/${userId}/read-all`,
         {
           method: "PATCH",
           headers: {

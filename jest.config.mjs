@@ -1,5 +1,6 @@
 export default {
-  testEnvironment: "node",
-  transform: {},
-  coverageProvider: "v8",
+  projects: [
+    "<rootDir>/jest.backend.config.mjs",
+    "<rootDir>/jest.frontend.config.js",
+  ],
 };

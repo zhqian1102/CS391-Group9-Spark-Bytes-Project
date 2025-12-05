@@ -66,6 +66,7 @@ beforeEach(() => {
   fileStore.clear();
   dirStore.clear();
   sendMail.mockClear();
+  jest.useRealTimers();
 });
 
 describe("auth routes", () => {
@@ -88,6 +89,7 @@ describe("auth routes", () => {
 
   test("register sends verification for BU email", async () => {
     const app = await createApp();
+    jest.spyOn(Math, "random").mockReturnValue(0); // deterministic code 100000
     const res = await request(app)
       .post("/api/auth/register")
       .send({
@@ -103,6 +105,7 @@ describe("auth routes", () => {
       email: "user@bu.edu",
     });
     expect(sendMail).toHaveBeenCalled();
+    Math.random.mockRestore();
   });
 
   test("verify-email without code returns 400", async () => {
@@ -115,6 +118,121 @@ describe("auth routes", () => {
     expect(res.body).toEqual({
       message: "No verification code found for this email",
     });
+  });
+
+  test("verify-email succeeds after registering with code", async () => {
+    jest.spyOn(Math, "random").mockReturnValue(0); // code = 100000
+    const app = await createApp();
+
+    await request(app).post("/api/auth/register").send({
+      name: "Tester",
+      email: "verify@bu.edu",
+      password: "secret123",
+      userType: "student",
+    });
+
+    const res = await request(app)
+      .post("/api/auth/verify-email")
+      .send({ email: "verify@bu.edu", code: "100000" });
+
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({
+      message: "Email verified and user registered successfully",
+      user: { email: "verify@bu.edu", name: "Tester", userType: "student" },
+    });
+    expect(res.body.token).toBeTruthy();
+    Math.random.mockRestore();
+  });
+
+  test("verification code expires after 10 minutes", async () => {
+    const base = new Date("2025-01-01T00:00:00Z");
+    jest.useFakeTimers().setSystemTime(base);
+    jest.spyOn(Math, "random").mockReturnValue(0);
+    const app = await createApp();
+
+    await request(app).post("/api/auth/register").send({
+      name: "Tester",
+      email: "expire@bu.edu",
+      password: "secret123",
+      userType: "student",
+    });
+
+    jest.setSystemTime(new Date(base.getTime() + 11 * 60 * 1000));
+
+    const res = await request(app)
+      .post("/api/auth/verify-email")
+      .send({ email: "expire@bu.edu", code: "100000" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/expired/i);
+    Math.random.mockRestore();
+    jest.useRealTimers();
+  });
+
+  test("resend-verification issues new code", async () => {
+    jest.spyOn(Math, "random").mockReturnValue(0);
+    const app = await createApp();
+
+    await request(app).post("/api/auth/register").send({
+      name: "Tester",
+      email: "resend@bu.edu",
+      password: "secret123",
+      userType: "student",
+    });
+    Math.random.mockRestore();
+
+    const res = await request(app)
+      .post("/api/auth/resend-verification")
+      .send({ email: "resend@bu.edu" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toMatch(/New verification code sent/i);
+    expect(sendMail).toHaveBeenCalledTimes(2);
+  });
+
+  test("register rejects short password", async () => {
+    const app = await createApp();
+    const res = await request(app)
+      .post("/api/auth/register")
+      .send({
+        name: "Test",
+        email: "short@bu.edu",
+        password: "123",
+        userType: "student",
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/at least 6 characters/i);
+  });
+
+  test("register rejects duplicate email in local storage", async () => {
+    const hashed = await bcrypt.hash("secret", 10);
+    fileStore.set(
+      USERS_FILE,
+      JSON.stringify([
+        {
+          id: 1,
+          name: "Existing",
+          email: "dup@bu.edu",
+          password: hashed,
+          userType: "student",
+          emailVerified: true,
+        },
+      ])
+    );
+
+    const app = await createApp();
+    const res = await request(app)
+      .post("/api/auth/register")
+      .send({
+        name: "New",
+        email: "dup@bu.edu",
+        password: "secret123",
+        userType: "student",
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/already exists/i);
   });
 
   test("login rejects non-BU email", async () => {

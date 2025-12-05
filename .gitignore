@@ -20,6 +20,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Coverage reports
+coverage/
+
 # OS
 .DS_Store
 .DS_Store?

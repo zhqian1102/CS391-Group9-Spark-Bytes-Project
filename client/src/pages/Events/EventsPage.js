@@ -9,7 +9,21 @@ import supabase, { APP_API_URL } from "../../config/supabase.js";
 import { useLocation } from "react-router-dom";
 
 const API_URL = APP_API_URL;
-// console.log("API_URL:", API_URL);
+const NO_SPOTS_VALUE = 0;
+
+const getSpotsLeft = (event) => {
+  if (event.capacity && event.attendees_count !== undefined) {
+    return Math.max(event.capacity - event.attendees_count, 0);
+  }
+  return NO_SPOTS_VALUE;
+};
+
+const isEventFull = (event) => {
+  const spotsLeft = getSpotsLeft(event);
+  return (
+    event.capacity && event.attendees_count !== undefined && spotsLeft === 0
+  );
+};
 
 const EventsPage = () => {
   const navigate = useNavigate();
@@ -46,7 +60,6 @@ const EventsPage = () => {
 
         const token = session?.access_token;
 
-        // ADD THIS CHECK
         if (!token) {
           console.error("No auth token found");
           setLoading(false);
@@ -56,8 +69,6 @@ const EventsPage = () => {
         const params = new URLSearchParams(location.search);
         const search = params.get("search") || "";
 
-        // Fetch events
-        console.log("Fetching events..."); // ADD THIS
         const eventsRes = await fetch(
           `${API_URL}/api/events${
             search ? `?search=${encodeURIComponent(search)}` : ""
@@ -68,29 +79,24 @@ const EventsPage = () => {
         );
 
         if (!eventsRes.ok) {
-          console.error("Events fetch failed:", eventsRes.status); // ADD THIS
+          console.error("Events fetch failed:", eventsRes.status);
           throw new Error("Failed to load events");
         }
 
         const eventsData = await eventsRes.json();
-        console.log("Events data:", eventsData); // ADD THIS
         let fetchedEvents = eventsData.events || [];
 
         // Fetch reserved events
-        console.log("Fetching reserved events..."); // ADD THIS
         const reservedRes = await fetch(`${API_URL}/api/events/reserved/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        console.log("Reserved response status:", reservedRes.status); // ADD THIS
-
         let reservedIds = [];
         if (reservedRes.ok) {
           const reservedData = await reservedRes.json();
-          console.log("Reserved data:", reservedData); // ADD THIS
           reservedIds = reservedData.reservedEventIds || [];
         } else {
-          console.error("Reserved fetch failed:", await reservedRes.text()); // ADD THIS
+          console.error("Reserved fetch failed:", await reservedRes.text());
         }
 
         // Merge reserved status
@@ -98,19 +104,17 @@ const EventsPage = () => {
           const isReserved = reservedIds.some(
             (rid) => String(rid) === String(e.id)
           );
-          console.log(`Event ${e.id} reserved:`, isReserved);
           return {
             ...e,
             isReserved,
           };
         });
 
-        console.log("Merged events:", merged); // ADD THIS
         setEvents(merged);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching events:", err);
-        setLoading(false); // ADD THIS - This was missing!
+        setLoading(false);
       }
     };
 
@@ -171,13 +175,12 @@ const EventsPage = () => {
             ? {
                 ...event,
                 isReserved: true,
-                attendees_count: (event.attendees_count || 0) + 1, // fallback if backend didn't send spotsLeft
+                attendees_count: (event.attendees_count || 0) + 1,
               }
             : event
         )
       );
 
-      // If modal is open, update selected event too
       if (selectedEvent?.id === eventId) {
         setSelectedEvent((prev) => ({
           ...prev,
@@ -361,84 +364,94 @@ const EventsPage = () => {
                   </button>
                 </div>
               ) : (
-                filteredEvents.map((event) => (
-                  <div key={event.id} className="event-card">
-                    <div className="event-image">
-                      <img
-                        src={
-                          event.image_urls?.[0] ||
-                          "https://placehold.co/600x400?text=No+Image"
-                        }
-                        alt={event.title}
-                      />
-                    </div>
+                filteredEvents.map((event) => {
+                  const spotsLeft = getSpotsLeft(event);
+                  const isFull = isEventFull(event);
+                  const noSpotsData = spotsLeft === NO_SPOTS_VALUE;
+                  const showAsFull = isFull || noSpotsData;
+                  const cardClassName = [
+                    "event-card",
+                    showAsFull ? "full" : "",
+                    noSpotsData ? "no-spots" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ");
 
-                    <div className="event-details">
-                      <div className="event-header">
-                        <h3 className="event-title">{event.title}</h3>
-                        <span className="spots-badge">
-                          {event.capacity && event.attendees_count !== undefined
-                            ? `${Math.max(
-                                event.capacity - event.attendees_count,
-                                0
-                              )} Spots Left`
-                            : "Spots Available"}
-                        </span>
+                  return (
+                    <div key={event.id} className={cardClassName}>
+                      <div className="event-image">
+                        <img
+                          src={
+                            event.image_urls?.[0] ||
+                            "https://placehold.co/600x400?text=No+Image"
+                          }
+                          alt={event.title}
+                        />
                       </div>
 
-                      <div className="event-info">
-                        <div className="info-item">
-                          <span className="info-icon">📍</span>
-                          <span>Location: {event.location}</span>
-                        </div>
-                        <div className="info-item">
-                          <span className="info-icon">📅</span>
-                          <span>Date: {event.date}</span>
-                        </div>
-                        <div className="info-item">
-                          <span className="info-icon">🕐</span>
-                          <span>Time: {event.time}</span>
-                        </div>
-                      </div>
-
-                      {event.food_items && event.food_items.length > 0 && (
-                        <div className="info-item">
-                          <span className="info-icon">🍕</span>
-                          <span>
-                            Food:{" "}
-                            {event.food_items
-                              .map((f) => `${f.item}: ${f.qty}`)
-                              .join("; ")}
+                      <div className="event-details">
+                        <div className="event-header">
+                          <h3 className="event-title">{event.title}</h3>
+                          <span
+                            className={`spots-badge ${
+                              showAsFull ? "full" : ""
+                            } ${noSpotsData ? "no-spots" : ""}`}
+                          >
+                            {showAsFull ? "Full" : `${spotsLeft} Spots Left`}
                           </span>
                         </div>
-                      )}
 
-                      <div className="event-footer">
-                        <div className="dietary-tags">
-                          {event.dietary_options?.map((tag) => (
-                            <span key={tag} className="dietary-tag">
-                              {tag}
-                            </span>
-                          ))}
+                        <div className="event-info">
+                          <div className="info-item">
+                            <span className="info-icon">📍</span>
+                            <span>Location: {event.location}</span>
+                          </div>
+                          <div className="info-item">
+                            <span className="info-icon">📅</span>
+                            <span>Date: {event.date}</span>
+                          </div>
+                          <div className="info-item">
+                            <span className="info-icon">🕐</span>
+                            <span>Time: {event.time}</span>
+                          </div>
                         </div>
-                        <button
-                          className="view-detail-btn"
-                          onClick={() => handleViewDetail(event)}
-                          style={
-                            event.isReserved
-                              ? {
-                                  background: "#888",
-                                  cursor: "default",
-                                }
-                              : {}
-                          }
-                        >
-                          {event.isReserved ? "Reserved" : "View Detail"}
-                        </button>
+
+                        {event.food_items && event.food_items.length > 0 && (
+                          <div className="info-item">
+                            <span className="info-icon">🍕</span>
+                            <span>
+                              Food:{" "}
+                              {event.food_items
+                                .map((f) => `${f.item}: ${f.qty}`)
+                                .join("; ")}
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="event-footer">
+                          <div className="dietary-tags">
+                            {event.dietary_options?.map((tag) => (
+                              <span key={tag} className="dietary-tag">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                          <button
+                            className={`view-detail-btn ${
+                              event.isReserved ? "reserved" : ""
+                            } ${noSpotsData ? "no-spots" : ""}`}
+                            onClick={() =>
+                              !showAsFull && handleViewDetail(event)
+                            }
+                            disabled={showAsFull}
+                          >
+                            {event.isReserved ? "Reserved" : "View Detail"}
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </>
