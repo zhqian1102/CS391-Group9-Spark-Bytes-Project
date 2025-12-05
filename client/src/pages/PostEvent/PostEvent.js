@@ -79,6 +79,57 @@ export default function PostEvent() {
     setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const validateForm = () => {
+    const hasEmptyRequiredFields =
+      !title.trim() ||
+      !location.trim() ||
+      !date.trim() ||
+      !time.trim() ||
+      !capacity.toString().trim();
+
+    const hasIncompleteFood = foodList.some(
+      (food) => !food.item.trim() || !food.qty.trim()
+    );
+
+    if (hasEmptyRequiredFields || hasIncompleteFood) {
+      alert("Please complete all required fields before posting your event.");
+      return false;
+    }
+
+    const timeHasAmPm = /\b(am|pm)\b/i.test(time);
+    if (!timeHasAmPm) {
+      alert("Please include AM or PM in the time field.");
+      return false;
+    }
+
+    const selectedDate = new Date(date);
+    const today = new Date();
+    selectedDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+
+    if (Number.isNaN(selectedDate.getTime())) {
+      alert("Please enter a valid event date.");
+      return false;
+    }
+
+    if (selectedDate < today) {
+      alert("Event date cannot be in the past.");
+      return false;
+    }
+
+    if (selectedDietary.length === 0) {
+      alert("Please select at least one dietary option.");
+      return false;
+    }
+
+    if (imageFiles.length === 0) {
+      alert("Please upload at least one event image.");
+      return false;
+    }
+
+    return true;
+  };
+
   const uploadImagesToSupabase = async (files) => {
     const uploadedUrls = [];
 
@@ -109,6 +160,8 @@ export default function PostEvent() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) return;
 
     try {
       // Get Supabase session

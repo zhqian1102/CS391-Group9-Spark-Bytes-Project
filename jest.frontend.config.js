@@ -34,4 +34,5 @@ export default {
     "/node_modules/(?!@supabase/supabase-js|@supabase/auth-js|@supabase/functions-js)/",
   ],
   moduleDirectories: ["node_modules", "<rootDir>/client/node_modules"],
+  setupFiles: ["<rootDir>/jest.frontend.setup.js"],
 };
