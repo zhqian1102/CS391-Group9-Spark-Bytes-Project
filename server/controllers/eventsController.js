@@ -55,6 +55,35 @@ export const createEvent = async (req, res) => {
 
     if (error) throw error;
 
+    // Get organizer's name
+    const { data: creatorProfile } = await supabase
+      .from("profiles")
+      .select("name")
+      .eq("id", user_id)
+      .single();
+
+    const creatorName = creatorProfile?.name || "Someone";
+
+    // Get all users except the organizer
+    const { data: allUsers } = await supabase
+      .from("profiles")
+      .select("id")
+      .neq("id", user_id);
+
+    // Create notifications for all users
+    if (allUsers && allUsers.length > 0) {
+      const notifications = allUsers.map((user) => ({
+        user_id: user.id,
+        type: "new_event",
+        title: creatorName,
+        message: `${creatorName} posted a new food event: ${title}`,
+        event_id: data[0].id,
+        is_read: false,
+      }));
+
+      await supabase.from("notifications").insert(notifications);
+    }
+
     return res
       .status(201)
       .json({ message: "Event created successfully", event: data[0] });
