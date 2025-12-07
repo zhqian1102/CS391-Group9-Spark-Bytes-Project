@@ -244,7 +244,7 @@ const NotificationPage = () => {
               <div
                 key={notification.id}
                 className={`notification-item ${
-                  notification.isRead ? "read" : "unread"
+                  notification.is_read ? "read" : "unread"
                 }`}
                 onClick={() => handleNotificationClick(notification.id)}
                 style={{ cursor: "pointer" }}
@@ -278,7 +278,7 @@ const NotificationPage = () => {
                   <span className="notification-time">
                     {formatTimeAgo(notification.created_at)}
                   </span>
-                  {!notification.isRead && <span className="unread-dot"></span>}
+                  {!notification.is_read && <span className="unread-dot"></span>}
                 </div>
               </div>
             ))
