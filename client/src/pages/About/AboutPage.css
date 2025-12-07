@@ -351,6 +351,31 @@
     color: #666;
     line-height: 1.6;
   }
+
+  .team-photo-container {
+    max-width: 500px;
+    margin: 3rem auto;
+    text-align: center;
+  }
+  
+  .team-photo {
+    width: 100%;
+    height: auto;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .team-photo:hover {
+    transform: scale(1.02);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+  }
+  
+  @media (max-width: 768px) {
+    .team-photo-container {
+      margin: 2rem auto;
+    }
+  }
   
   /* CTA Section */
   .cta-section {

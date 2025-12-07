@@ -128,6 +128,15 @@ const AboutPage = () => {
               sustainability and community. We built this platform to address the real problem of 
               food waste on campus while helping fellow students discover free meals.
             </p>
+
+            <div className="team-photo-container">
+              <img 
+                src="/teamPhoto.JPG"
+                alt="Spark!Bytes Team - Group of BU CS students" 
+                className="team-photo"
+              />
+            </div>
+
             <div className="team-values">
               <div className="value-card">
                 <div className="value-icon">💻</div>
