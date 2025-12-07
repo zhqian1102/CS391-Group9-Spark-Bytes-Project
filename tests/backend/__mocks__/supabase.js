@@ -30,7 +30,16 @@ const nextId = (table) => {
 
 const applyFilters = (rows, filters = []) =>
   rows.filter((row) =>
-    filters.every(({ column, value }) => String(row[column]) === String(value))
+    filters.every(({ column, value, op }) => {
+      const left = String(row[column]);
+      const right = String(value);
+
+      if (op === "neq") {
+        return left !== right;
+      }
+
+      return left === right;
+    })
   );
 
 const applyOrdering = (rows, ordering) => {
@@ -88,7 +97,12 @@ class QueryBuilder {
   }
 
   eq(column, value) {
-    this.filters.push({ column, value });
+    this.filters.push({ column, value, op: "eq" });
+    return this;
+  }
+
+  neq(column, value) {
+    this.filters.push({ column, value, op: "neq" });
     return this;
   }
 
