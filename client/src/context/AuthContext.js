@@ -19,7 +19,6 @@ export const AuthProvider = ({ children }) => {
     // Check if Supabase is configured
     if (!supabase) {
       console.log("Supabase not configured, using localStorage fallback");
-      // Check localStorage for existing session
       const storedUser = localStorage.getItem("user");
       if (storedUser) {
         setUser(JSON.parse(storedUser));
@@ -28,17 +27,40 @@ export const AuthProvider = ({ children }) => {
       return;
     }
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // INSTANT LOAD: Load from localStorage immediately (no flicker!)
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+
+    // Get initial session and fetch fresh data from database
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
-        setUser({
+        // Fetch complete profile from database
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+
+        const userData = profile ? {
           id: session.user.id,
           email: session.user.email,
-          name:
-            session.user.user_metadata?.name ||
-            session.user.email.split("@")[0],
+          name: profile.name,
+          userType: profile.user_type || "student",
+          profilePicture: profile.profile_picture,
+          dietaryPreferences: profile.dietary_preferences || [],
+        } : {
+          id: session.user.id,
+          email: session.user.email,
+          name: session.user.user_metadata?.name || session.user.email.split("@")[0],
           userType: session.user.user_metadata?.userType || "student",
-        });
+          profilePicture: null,
+          dietaryPreferences: [],
+        };
+        
+        setUser(userData);
+        localStorage.setItem("user", JSON.stringify(userData));
       }
       setLoading(false);
     });
@@ -48,83 +70,54 @@ export const AuthProvider = ({ children }) => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
-        setUser({
-          id: session.user.id,
-          email: session.user.email,
-          name:
-            session.user.user_metadata?.name ||
-            session.user.email.split("@")[0],
-          userType: session.user.user_metadata?.userType || "student",
-        });
+        // Just trigger a refresh instead of setting basic data
+        refreshUser();
       } else {
         setUser(null);
+        localStorage.removeItem("user");
       }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  // const login = async (email, password) => {
-  //   try {
-  //     // Always use backend API for login to match our registration flow
-  //     const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
-  //     const response = await fetch(`${API_URL}/api/auth/login`, {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: JSON.stringify({ email, password }),
-  //     });
+  // Refresh profile when tab becomes visible again
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (!document.hidden && user) {
+        await refreshUser();
+      }
+    };
 
-  //     const data = await response.json();
-
-  //     if (!response.ok) {
-  //       return { success: false, error: data.message || 'Login failed' };
-  //     }
-
-  //     // Set user data after successful login
-  //     const userData = {
-  //       id: data.user.id,
-  //       email: data.user.email,
-  //       name: data.user.name,
-  //       userType: data.user.userType
-  //     };
-
-  //     setUser(userData);
-  //     localStorage.setItem('user', JSON.stringify(userData));
-
-  //     return { success: true, user: userData };
-  //   } catch (error) {
-  //     return {
-  //       success: false,
-  //       error: error.message || 'Login failed'
-  //     };
-  //   }
-  // };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [user]);
 
   const login = async (email, password) => {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) return { success: false, error: error.message };
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) return { success: false, error: error.message };
 
-      const user = data.user;
-      const userData = {
-        id: user.id,
-        email: user.email,
-        name: user.user_metadata?.name || user.email.split("@")[0],
-        userType: user.user_metadata?.userType || "student",
-      };
+    const user = data.user;
+    const userData = {
+      id: user.id,
+      email: user.email,
+      name: user.user_metadata?.name || user.email.split("@")[0],
+      userType: user.user_metadata?.userType || "student",
+      profilePicture: null,  // Add these as null for now
+      dietaryPreferences: [], // Add empty array
+    };
 
-      setUser(userData);
-      localStorage.setItem("user", JSON.stringify(userData));
-      return { success: true, user: userData };
-    } catch (err) {
-      return { success: false, error: err.message };
-    }
-  };
+    setUser(userData);
+    localStorage.setItem("user", JSON.stringify(userData));
+    return { success: true, user: userData };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+};
 
   const register = async (name, email, password, userType) => {
     try {
@@ -241,112 +234,114 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateProfile = async (updates) => {
-  try {
-    // Update name and/or profilePicture via backend API
-    if (updates.name || updates.profilePicture !== undefined) {
-      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
-      
-      let token = null;
-      
-      if (supabase) {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error('Error getting session:', error);
+    try {
+      // Update name and/or profilePicture via backend API
+      if (updates.name || updates.profilePicture !== undefined) {
+        const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+        
+        let token = null;
+        
+        if (supabase) {
+          const { data: { session }, error } = await supabase.auth.getSession();
+          if (error) {
+            console.error('Error getting session:', error);
+          }
+          token = session?.access_token;
         }
-        token = session?.access_token;
+        
+        if (!token) {
+          console.error('No authentication token available');
+          return { success: false, error: 'No authentication token' };
+        }
+        
+        // Build request body
+        const requestBody = {};
+        if (updates.name) requestBody.name = updates.name;
+        if (updates.profilePicture !== undefined) requestBody.profilePicture = updates.profilePicture;
+        if (updates.dietaryPreferences !== undefined) requestBody.dietaryPreferences = updates.dietaryPreferences;
+        
+        const response = await fetch(`${API_URL}/api/user/profile`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(requestBody)
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+          console.error('Profile update failed:', data);
+          return { success: false, error: data.error || 'Failed to update profile' };
+        }
+        
+        // Update local state
+        const updatedUser = {
+          ...user,
+          name: data.user.name,
+          profilePicture: data.user.profilePicture,
+          dietaryPreferences: data.user.dietaryPreferences || user.dietaryPreferences
+        };
+        
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        
+        return { success: true, user: updatedUser };
       }
       
-      if (!token) {
-        console.error('No authentication token available');
-        return { success: false, error: 'No authentication token' };
-      }
-      
-      // Build request body
-      const requestBody = {};
-      if (updates.name) requestBody.name = updates.name;
-      if (updates.profilePicture !== undefined) requestBody.profilePicture = updates.profilePicture;
-      
-      const response = await fetch(`${API_URL}/api/user/profile`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(requestBody)
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        console.error('Profile update failed:', data);
-        return { success: false, error: data.error || 'Failed to update profile' };
-      }
-      
-      // Update local state
-      const updatedUser = {
-        ...user,
-        name: data.user.name,
-        profilePicture: data.user.profilePicture
-      };
-      
+      // For other fields (dietaryPreferences only), just store in localStorage
+      const updatedUser = { ...user, ...updates };
       setUser(updatedUser);
       localStorage.setItem('user', JSON.stringify(updatedUser));
       
       return { success: true, user: updatedUser };
+    } catch (err) {
+      console.error('Update profile error:', err);
+      return { success: false, error: err.message };
     }
-    
-    // For other fields (dietaryPreferences), just store in localStorage
-    const updatedUser = { ...user, ...updates };
-    setUser(updatedUser);
-    localStorage.setItem('user', JSON.stringify(updatedUser));
-    
-    return { success: true, user: updatedUser };
-  } catch (err) {
-    console.error('Update profile error:', err);
-    return { success: false, error: err.message };
-  }
-};
+  };
 
+  const refreshUser = async () => {
+    try {
+      if (supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          // Load profile from database
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
 
-const refreshUser = async () => {
-  try {
-    if (supabase) {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        // Load profile from database
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-
-        if (profile) {
-          const userData = {
-            id: session.user.id,
-            email: session.user.email,
-            name: profile.name,
-            userType: profile.user_type,
-            profilePicture: profile.profile_picture,
-          };
-          setUser(userData);
-          localStorage.setItem("user", JSON.stringify(userData));
-          return { success: true };
+          if (profile) {
+            const userData = {
+              id: session.user.id,
+              email: session.user.email,
+              name: profile.name,
+              userType: profile.user_type,
+              profilePicture: profile.profile_picture,
+              dietaryPreferences: profile.dietary_preferences || [],
+            };
+            setUser(userData);
+            localStorage.setItem("user", JSON.stringify(userData));
+            return { success: true };
+          }
         }
       }
-    }
 
-    // Fallback to localStorage
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-      return { success: true };
+      // Fallback to localStorage
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+        return { success: true };
+      }
+      return { success: false };
+    } catch (err) {
+      console.error('Error refreshing user:', err);
+      return { success: false };
     }
-    return { success: false };
-  } catch (err) {
-    console.error('Error refreshing user:', err);
-    return { success: false };
-  }
-};
+  };
 
   const value = {
     user,
