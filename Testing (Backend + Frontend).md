@@ -2,8 +2,8 @@
 
 This repository uses a Jest multi-project config:
 
-- Backend tests → `jest.backend.config.mjs` (Node + Supertest + Supabase mocks)
-- Frontend tests → `jest.frontend.config.js` (jsdom + React + babel-jest)
+- Backend tests → `jest.backend.config.mjs` (Jest + Supertest + Supabase mock)
+- Frontend tests → `jest.frontend.config.js` (Jest + React Testing Library)
 - Root aggregator → `jest.config.mjs` (runs both projects together)
 
 ## One-Time Setup
@@ -51,3 +51,36 @@ Supabase mock helpers:
 - `Login.test.js`: BU email validation, mismatched passwords, login success nav, signup verification flow, direct signup success to login, invalid verification code error.
 - `UserProfile.test.js`: Redirect when unauthenticated, edit/save success/error, logout navigation.
 - `EventDetailModal.test.js`: Renders modal content, map, carousel navigation, reserve success/failure, reserved disable, backdrop/Escape close, image controls, body scroll lock.
+
+## Testing plan (what & how)
+
+- **Authentication & verification**
+
+  - What: BU email validation, password length, duplicate email guard, verification code send/resend/expiry, local JSON login fallback, token issuance.
+  - How: backend integration (`tests/backend/auth.test.js`) with fs + nodemailer mocks; keep deterministic `Math.random` in tests; add malformed payload/lockout cases if implemented.
+
+- **Profiles**
+
+  - What: auth gating (401 without token), profile fetch shape, name required on update, trimming, dietary prefs/avatar updates.
+  - How: backend integration (`tests/backend/userProfile.test.js`) using Supabase mock; extend to cover missing profile 404 and upload failures if added.
+
+- **Events & reservations**
+
+  - What: create requires all fields; list sorting/search; reserve increments counts and notifies; full-event rejection; cancel decrements counts + host notice; owner-only update/delete/attendee list; 404s for missing events.
+  - How: backend controller tests (`tests/backend/events.test.js`) seeding tables via mock; add negative paths for bad payloads, past dates, duplicate reservations if logic grows.
+
+- **Notifications**
+
+  - What: user-scoped listing sorted desc, create defaults `is_read=false`, patch single read, patch read-all scoped to user.
+  - How: backend integration (`tests/backend/notifications.test.js`); add delete/archive and channel failure cases if introduced.
+
+- **Frontend pages (component/integration)**
+
+  - Coverage already present for: EventsPage (fetch/merge, full state, filters, modal, empty state), Login (BU email, password match, login/signup/verification flows), PostEvent & EditEvent (validation, image rules, errors), Organizer/User dashboards (edit/delete, reserved fetch/cancel alerts), ViewAttendees (owner success/403/unauth, export alert), NotificationPage (unauth/error/success), UserProfile (redirect unauth, save success/error, logout), EventDetailModal (render, reserve success/failure, disable reserved, close/controls).
+  - Gaps to consider: accessibility assertions (roles/labels), loading states, error toasts consistency, pagination/search params if added.
+
+- **Cross-cutting**
+  - Errors: keep 400/401/403/404 covered; add 409/422 when new validation rules appear.
+  - Auth: mock Supabase session/JWT headers consistently; add expiry/refresh behaviors if built.
+  - Data integrity: capacity vs attendees counts, duplicate reservation prevention, consistent date/time formats across backend/frontend.
+  - Optional E2E: Playwright smoke flows (login → reserve/cancel; organizer create/edit/delete; profile edit/logout; notifications) once servers are easy to start.
