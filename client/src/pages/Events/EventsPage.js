@@ -39,6 +39,7 @@ const EventsPage = () => {
   const [locationFilter, setLocationFilter] = useState("");
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDietaryFilterManual, setIsDietaryFilterManual] = useState(false);
 
   const location = useLocation();
 
@@ -48,6 +49,12 @@ const EventsPage = () => {
       navigate("/login");
     }
   }, [user, navigate]);
+
+  useEffect(() => {
+  if (user?.dietaryPreferences && user.dietaryPreferences.length > 0 && !isDietaryFilterManual) {
+    setDietaryFilter(user.dietaryPreferences[0]); // Auto-apply first preference
+  }
+}, [user, isDietaryFilterManual]);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -126,6 +133,13 @@ const EventsPage = () => {
     setDietaryFilter("");
     setLocationFilter("");
     setSearchQuery("");
+    setIsDietaryFilterManual(false);
+  };
+
+  // User manually changed it
+  const handleDietaryFilterChange = (value) => {
+  setDietaryFilter(value);
+  setIsDietaryFilterManual(true);
   };
 
   // Open modal
@@ -304,7 +318,7 @@ const EventsPage = () => {
             </label>
             <select
               value={dietaryFilter}
-              onChange={(e) => setDietaryFilter(e.target.value)}
+              onChange={(e) => handleDietaryFilterChange(e.target.value)}
               className="filter-select"
             >
               <option value="">Select dietary preference</option>
