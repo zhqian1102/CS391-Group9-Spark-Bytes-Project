@@ -72,14 +72,20 @@ const OrganizerDashboard = () => {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session.access_token;
 
-      const response = await fetch(`${API_URL}/api/events/posted/${event.id}`, {
+      const response = await fetch(`${API_URL}/api/events/${event.id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      const result = await response.json();
+      let result;
+      try {
+        result = await response.json();
+      } catch (parseErr) {
+        console.error("Delete response parse error:", parseErr);
+        result = { error: "Unexpected server response." };
+      }
 
       if (!response.ok) {
         alert(result.error || "Failed to delete event.");
