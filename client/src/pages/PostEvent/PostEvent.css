@@ -107,6 +107,23 @@
   background-color: #c62828;
 }
 
+.remove-btn {
+  width: 45px;
+  height: 38px;
+  background-color: #2d4a4a;
+  color:  white;
+  font-size: 22px;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.remove-btn:hover {
+  background-color: #2d4a4a;
+}
+
 /* TAGS */
 .dietary-tags {
   display: grid;
