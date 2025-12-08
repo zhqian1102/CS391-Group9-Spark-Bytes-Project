@@ -394,12 +394,16 @@ export const deleteEvent = async (req, res) => {
 
     if (attendeesError) throw attendeesError;
 
-    const todayMidnight = new Date().setHours(0, 0, 0, 0);
-    const eventDate = new Date(event.date).setHours(0, 0, 0, 0);
-    const shouldNotifyAttendees =
-      Array.isArray(attendees) &&
-      attendees.length > 0 &&
-      eventDate >= todayMidnight;
+    const todayMidnight = new Date();
+    todayMidnight.setHours(0, 0, 0, 0);
+
+    // Normalize date string to local midnight; bare "YYYY-MM-DD" strings are
+    // treated as UTC by Date(), which can shift the day for some timezones.
+    const eventDate = new Date(`${event.date}T00:00:00`);
+    eventDate.setHours(0, 0, 0, 0);
+
+    const hasAttendees = Array.isArray(attendees) && attendees.length > 0;
+    const shouldNotifyAttendees = hasAttendees && eventDate >= todayMidnight;
 
     if (shouldNotifyAttendees) {
       const { data: organizerProfile } = await supabase
