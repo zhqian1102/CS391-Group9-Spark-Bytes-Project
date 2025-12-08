@@ -31,6 +31,15 @@ const NavigationBar = () => {
     }
   }, [searchQuery, navigate, location.pathname]);
 
+  // Preload profile picture into browser cache to prevent flicker
+useEffect(() => {
+  if (user?.profilePicture) {
+    const img = new Image();
+    img.src = user.profilePicture;
+  }
+}, [user?.profilePicture]);
+
+
   // Get user initials for placeholder
   const getInitials = () => {
     if (!user?.name) return '?';
