@@ -30,6 +30,11 @@ export default function PostEvent() {
   }, [imagePreviews]);
 
   const handleAdd = () => setFoodList([...foodList, { item: "", qty: "" }]);
+  const handleRemove = (index) => {
+    // Keep at least one row; only allow removing non-first entries
+    if (index === 0 || foodList.length === 1) return;
+    setFoodList((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleChange = (index, field, value) => {
     const updated = [...foodList];
@@ -319,6 +324,16 @@ export default function PostEvent() {
                 {index === 0 && (
                   <button type="button" className="add-btn" onClick={handleAdd}>
                     +
+                  </button>
+                )}
+                {index > 0 && (
+                  <button
+                    type="button"
+                    className="remove-btn"
+                    onClick={() => handleRemove(index)}
+                    aria-label="Remove food row"
+                  >
+                    -
                   </button>
                 )}
               </div>
