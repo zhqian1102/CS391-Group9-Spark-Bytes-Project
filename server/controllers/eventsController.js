@@ -377,7 +377,7 @@ export const deleteEvent = async (req, res) => {
 
     const { data: event, error: fetchError } = await supabase
       .from("events")
-      .select("user_id")
+      .select("user_id, title, date")
       .eq("id", eventId)
       .single();
 
@@ -386,6 +386,45 @@ export const deleteEvent = async (req, res) => {
 
     if (event.user_id !== user_id)
       return res.status(403).json({ error: "Unauthorized: Not your event" });
+
+    const { data: attendees, error: attendeesError } = await supabase
+      .from("event_attendees")
+      .select("user_id")
+      .eq("event_id", eventId);
+
+    if (attendeesError) throw attendeesError;
+
+    const todayMidnight = new Date().setHours(0, 0, 0, 0);
+    const eventDate = new Date(event.date).setHours(0, 0, 0, 0);
+    const shouldNotifyAttendees =
+      Array.isArray(attendees) &&
+      attendees.length > 0 &&
+      eventDate >= todayMidnight;
+
+    if (shouldNotifyAttendees) {
+      const { data: organizerProfile } = await supabase
+        .from("profiles")
+        .select("name")
+        .eq("id", user_id)
+        .single();
+
+      const organizerName = organizerProfile?.name || "Organizer";
+
+      const notifications = attendees.map((attendee) => ({
+        user_id: attendee.user_id,
+        type: "event_cancelled",
+        title: organizerName,
+        message: `The event "${event.title}" you reserved was cancelled.`,
+        event_id: eventId,
+        is_read: false,
+      }));
+
+      const { error: notificationError } = await supabase
+        .from("notifications")
+        .insert(notifications);
+
+      if (notificationError) throw notificationError;
+    }
 
     const { error: attendeeError } = await supabase
       .from("event_attendees")

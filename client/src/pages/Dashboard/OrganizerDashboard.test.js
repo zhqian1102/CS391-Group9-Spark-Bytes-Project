@@ -195,7 +195,9 @@ describe("OrganizerDashboard edit and delete actions", () => {
       await flushPromises();
     });
 
-    expect(confirmSpy).toHaveBeenCalled();
+    expect(confirmSpy).toHaveBeenCalledWith(
+      "This event has reserved attendees. Delete it and notify them anyway?"
+    );
     expect(alertSpy).toHaveBeenCalledWith("Event deleted successfully.");
     expect(container.textContent).not.toContain(futureEvent.title);
   });
@@ -223,6 +225,9 @@ describe("OrganizerDashboard edit and delete actions", () => {
       await flushPromises();
     });
 
+    expect(confirmSpy).toHaveBeenCalledWith(
+      "This event has reserved attendees. Delete it and notify them anyway?"
+    );
     expect(alertSpy).toHaveBeenCalledWith("Deletion failed");
     expect(container.textContent).toContain(futureEvent.title);
   });
