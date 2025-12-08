@@ -55,14 +55,24 @@ const OrganizerDashboard = () => {
     setTimeout(() => navigate("/userdashboard"), 300);
   };
 
-  const handleDelete = async (eventId) => {
-    if (!window.confirm("Are you sure you want to delete this event?")) return;
+  const handleDelete = async (event) => {
+    const todayMidnight = new Date().setHours(0, 0, 0, 0);
+    const eventDate = new Date(event.date).setHours(0, 0, 0, 0);
+    const hasAttendees = event.attendees_count > 0;
+    const isUpcoming = eventDate >= todayMidnight;
+
+    const confirmMessage =
+      isUpcoming && hasAttendees
+        ? "This event has reserved attendees. Delete it and notify them anyway?"
+        : "Are you sure you want to delete this event?";
+
+    if (!window.confirm(confirmMessage)) return;
 
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session.access_token;
 
-      const response = await fetch(`${API_URL}/api/events/posted/${eventId}`, {
+      const response = await fetch(`${API_URL}/api/events/posted/${event.id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -78,7 +88,7 @@ const OrganizerDashboard = () => {
 
       alert("Event deleted successfully.");
 
-      setPostedEvents((prev) => prev.filter((e) => e.id !== eventId));
+      setPostedEvents((prev) => prev.filter((e) => e.id !== event.id));
     } catch (err) {
       console.error(" Delete error:", err);
       alert("Server error while deleting event.");
@@ -202,7 +212,7 @@ const OrganizerDashboard = () => {
 
                       <button
                         className="cancel-button"
-                        onClick={() => handleDelete(event.id)}
+                        onClick={() => handleDelete(event)}
                       >
                         Delete
                       </button>
