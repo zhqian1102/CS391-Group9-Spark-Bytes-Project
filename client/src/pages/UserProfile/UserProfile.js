@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import NavigationBar from '../../components/NavigationBar';
 import Footer from '../../components/Footer';
+import supabase from '../../config/supabase';
 import './UserProfile.css';
 
 const UserProfile = () => {
   const navigate = useNavigate();
   const { user, updateProfile, logout, refreshUser } = useAuth();
-  const hasLoadedRef = useRef(false); //  Track if we've loaded data
+  const hasLoadedRef = useRef(false);
   
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -22,14 +23,12 @@ const UserProfile = () => {
     dietaryPreferences: []
   });
 
-  // Redirect if not authenticated
   useEffect(() => {
     if (!user) {
       navigate('/login');
     }
   }, [user, navigate]);
 
-  // Load fresh data from database ONCE on mount
   useEffect(() => {
     const loadProfile = async () => {
       if (user && !hasLoadedRef.current) {
@@ -38,10 +37,9 @@ const UserProfile = () => {
       }
     };
     loadProfile();
-    
-  }, []); // Empty array - only run ONCE on mount, prevents infinite loop!
+  }, []);
 
-  // Update form when user data changes (but not while editing!)
+  // Reset image preview when user changes (like EventDetailModal does)
   useEffect(() => {
     if (user && !isEditing) {
       setFormData({
@@ -52,6 +50,14 @@ const UserProfile = () => {
       setImagePreview(user.profilePicture || null);
     }
   }, [user, isEditing]);
+
+  // Preload profile picture into browser cache to prevent flicker
+  useEffect(() => {
+    if (user?.profilePicture) {
+      const img = new Image();
+      img.src = user.profilePicture;
+    }
+  }, [user?.profilePicture]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -72,33 +78,111 @@ const UserProfile = () => {
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      // Check file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setMessage({ type: 'error', text: 'Image must be less than 5MB' });
-        return;
-      }
+    if (!file) return;
 
-      // Check file type
-      if (!file.type.startsWith('image/')) {
-        setMessage({ type: 'error', text: 'Please select an image file' });
-        return;
-      }
-
-      setProfileImage(file);
-      
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+    // Add SVG to valid types
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+    if (!validTypes.includes(file.type)) {
+      setMessage({ 
+        type: 'error', 
+        text: 'Please select a valid image (JPG, PNG, GIF, WebP, or SVG)' 
+      });
+      return;
     }
+
+    // Check file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setMessage({ 
+        type: 'error', 
+        text: 'Image must be less than 5MB' 
+      });
+      return;
+    }
+
+    setProfileImage(file);
+    setMessage({ type: '', text: '' });
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+    };
+    reader.onerror = () => {
+      setMessage({ 
+        type: 'error', 
+        text: 'Failed to read image file' 
+      });
+    };
+    reader.readAsDataURL(file);
   };
 
-  const handleRemoveImage = () => {
+  const handleRemoveImage = async () => {
+    if (user.profilePicture) {
+      try {
+        // Delete from Supabase Storage
+        const fileName = user.profilePicture.split('/').pop();
+        const filePath = `${user.id}/${fileName}`;
+        
+        await supabase.storage
+          .from('profile-pictures')
+          .remove([filePath]);
+        
+        console.log('✅ Old image deleted from storage');
+      } catch (error) {
+        console.error('Error deleting old image:', error);
+      }
+    }
+    
     setProfileImage(null);
     setImagePreview(null);
+    
+    const fileInput = document.getElementById('profile-image-upload');
+    if (fileInput) fileInput.value = '';
+  };
+
+  const uploadImageToSupabase = async (file) => {
+    try {
+      // Delete old image first if exists
+      if (user.profilePicture) {
+        const oldFileName = user.profilePicture.split('/').pop();
+        const oldFilePath = `${user.id}/${oldFileName}`;
+        
+        await supabase.storage
+          .from('profile-pictures')
+          .remove([oldFilePath]);
+      }
+
+      // Upload new image
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
+
+      console.log('📤 Uploading image to:', filePath);
+
+      const { data, error } = await supabase.storage
+        .from('profile-pictures')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) {
+        console.error('Storage upload error:', error);
+        throw error;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('profile-pictures')
+        .getPublicUrl(filePath);
+
+      console.log('✅ Image uploaded! URL:', publicUrl);
+      return publicUrl;
+    } catch (error) {
+      console.error('Upload error:', error);
+      throw new Error('Failed to upload image');
+    }
   };
 
   const handleSave = async () => {
@@ -106,21 +190,32 @@ const UserProfile = () => {
     setMessage({ type: '', text: '' });
 
     try {
-      // If there's a new image, convert to base64 for storage
-      let profilePictureData = imagePreview;
+      let profilePictureUrl = user.profilePicture;
+
+      // If there's a new image, upload it to Supabase Storage
+      if (profileImage) {
+        console.log('📄 Uploading new profile picture...');
+        profilePictureUrl = await uploadImageToSupabase(profileImage);
+      }
       
+      // If image was removed
+      if (imagePreview === null && user.profilePicture) {
+        profilePictureUrl = null;
+      }
+
+      console.log('💾 Saving profile with picture URL:', profilePictureUrl);
+
       const result = await updateProfile({
         name: formData.name,
         dietaryPreferences: formData.dietaryPreferences,
-        profilePicture: profilePictureData
+        profilePicture: profilePictureUrl
       });
 
       if (result.success) {
-        // No need to call refreshUser - updateProfile already updated the state
         setMessage({ type: 'success', text: 'Profile updated successfully!' });
         setIsEditing(false);
+        setProfileImage(null);
         
-        // Clear message after 3 seconds
         setTimeout(() => {
           setMessage({ type: '', text: '' });
         }, 3000);
@@ -128,14 +223,14 @@ const UserProfile = () => {
         setMessage({ type: 'error', text: result.error || 'Failed to update profile' });
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to update profile' });
+      console.error('Save error:', error);
+      setMessage({ type: 'error', text: error.message || 'Failed to update profile' });
     } finally {
       setLoading(false);
     }
   };
 
   const handleCancel = () => {
-    // Reset form to current user data
     setFormData({
       name: user.name || '',
       email: user.email || '',
@@ -145,6 +240,9 @@ const UserProfile = () => {
     setProfileImage(null);
     setIsEditing(false);
     setMessage({ type: '', text: '' });
+    
+    const fileInput = document.getElementById('profile-image-upload');
+    if (fileInput) fileInput.value = '';
   };
 
   const handleLogout = async () => {
@@ -169,9 +267,8 @@ const UserProfile = () => {
     'Other'
   ];
 
-  // Get user initials for default avatar
   const getInitials = () => {
-    if (!user.name) return '?';
+    if (!user?.name) return '?';
     const names = user.name.split(' ');
     if (names.length >= 2) {
       return (names[0][0] + names[names.length - 1][0]).toUpperCase();
@@ -207,14 +304,12 @@ const UserProfile = () => {
         )}
 
         <div className="profile-content-grid">
-          {/* Profile Picture & Basic Info Card */}
           <div className="profile-card">
             <h2 className="card-title">
               <span className="card-icon">👤</span>
               Basic Information
             </h2>
 
-            {/* Profile Picture Section */}
             <div className="profile-picture-section">
               <div className="profile-picture-container">
                 {imagePreview ? (
@@ -222,6 +317,12 @@ const UserProfile = () => {
                     src={imagePreview} 
                     alt="Profile" 
                     className="profile-picture"
+                    loading="lazy"
+                    onError={(e) => {
+                      console.error('Image failed to load');
+                      // Fallback to placeholder on error
+                      setImagePreview(null);
+                    }}
                   />
                 ) : (
                   <div className="profile-picture-placeholder">
@@ -238,7 +339,7 @@ const UserProfile = () => {
                   <input
                     id="profile-image-upload"
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/svg+xml"
                     onChange={handleImageChange}
                     style={{ display: 'none' }}
                   />
@@ -251,7 +352,7 @@ const UserProfile = () => {
                       Remove
                     </button>
                   )}
-                  <p className="upload-hint">Max 5MB, JPG/PNG</p>
+                  <p className="upload-hint">JPG, PNG, GIF or WebP (Max 5MB)</p>
                 </div>
               )}
             </div>
@@ -288,7 +389,6 @@ const UserProfile = () => {
             </div>
           </div>
 
-          {/* Dietary Preferences Card */}
           <div className="profile-card">
             <h2 className="card-title">
               <span className="card-icon">🍽️</span>
@@ -316,7 +416,6 @@ const UserProfile = () => {
             </div>
           </div>
 
-          {/* Account Actions Card */}
           <div className="profile-card">
             <h2 className="card-title">
               <span className="card-icon">⚙️</span>
@@ -343,7 +442,6 @@ const UserProfile = () => {
           </div>
         </div>
 
-        {/* Action Buttons (shown when editing) */}
         {isEditing && (
           <div className="profile-actions">
             <button 
