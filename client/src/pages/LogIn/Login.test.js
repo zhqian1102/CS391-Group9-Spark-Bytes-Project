@@ -9,10 +9,11 @@ jest.mock("../../context/AuthContext", () => ({
 }));
 
 const mockNavigate = jest.fn();
+let mockSearchParams = new URLSearchParams();
 jest.mock("react-router-dom", () => ({
   ...jest.requireActual("react-router-dom"),
   useNavigate: () => mockNavigate,
-  useSearchParams: () => [new URLSearchParams(), jest.fn()],
+  useSearchParams: () => [mockSearchParams, jest.fn()],
 }));
 
 jest.mock("../../components/NavigationBar", () => () => <div>Navigation</div>);
@@ -33,6 +34,7 @@ describe("Login page", () => {
     document.body.appendChild(container);
     alertSpy = jest.spyOn(window, "alert").mockImplementation(() => {});
     mockNavigate.mockClear();
+    mockSearchParams = new URLSearchParams();
     authMocks = {
       login: jest.fn(),
       register: jest.fn(),
@@ -223,5 +225,97 @@ describe("Login page", () => {
       "123456"
     );
     expect(container.textContent).toContain("Invalid code");
+  });
+
+  it("displays login error returned from auth", async () => {
+    authMocks.login.mockResolvedValue({ success: false, error: "Invalid credentials" });
+
+    await renderPage();
+    await setInputValue("email", "user@bu.edu");
+    await setInputValue("password", "wrong");
+    await submitForm();
+
+    expect(authMocks.login).toHaveBeenCalledWith("user@bu.edu", "wrong");
+    expect(container.textContent).toContain("Invalid credentials");
+  });
+
+  it("shows register error when signup fails", async () => {
+    authMocks.register.mockResolvedValue({ success: false, error: "Email taken" });
+
+    await renderPage();
+    await clickButtonByText("Sign Up");
+    await setInputValue("name", "Student Tester");
+    await setInputValue("email", "student@bu.edu");
+    await setInputValue("password", "secret123");
+    await setInputValue("confirmPassword", "secret123");
+    await submitForm();
+
+    expect(authMocks.register).toHaveBeenCalled();
+    expect(container.textContent).toContain("Email taken");
+  });
+
+  it("verifies code successfully and navigates", async () => {
+    authMocks.register.mockResolvedValue({
+      success: true,
+      needsVerification: true,
+      message: "Code sent",
+    });
+    authMocks.verifyEmail.mockResolvedValue({
+      success: true,
+      message: "Verified",
+      user: { name: "Tester" },
+    });
+
+    await renderPage();
+    await clickButtonByText("Sign Up");
+    await setInputValue("name", "Student Tester");
+    await setInputValue("email", "student@bu.edu");
+    await setInputValue("password", "secret123");
+    await setInputValue("confirmPassword", "secret123");
+    await submitForm();
+
+    await setInputValue("verificationCode", "123456");
+    await submitForm();
+
+    expect(authMocks.verifyEmail).toHaveBeenCalledWith("student@bu.edu", "123456");
+    expect(alertSpy).toHaveBeenCalledWith(
+      "Verified Welcome to Spark Bytes, Tester!"
+    );
+    expect(mockNavigate).toHaveBeenCalledWith("/events");
+  });
+
+  it("resends verification code and handles error", async () => {
+    authMocks.register.mockResolvedValue({
+      success: true,
+      needsVerification: true,
+      message: "Code sent",
+    });
+    authMocks.resendVerificationCode
+      .mockResolvedValueOnce({ success: true, message: "Resent" })
+      .mockResolvedValueOnce({ success: false, error: "No code" });
+
+    await renderPage();
+    await clickButtonByText("Sign Up");
+    await setInputValue("name", "Student Tester");
+    await setInputValue("email", "student@bu.edu");
+    await setInputValue("password", "secret123");
+    await setInputValue("confirmPassword", "secret123");
+    await submitForm(); // enters verification mode
+
+    // first resend success
+    await clickButtonByText("Didn't receive the code? Resend");
+    expect(authMocks.resendVerificationCode).toHaveBeenCalledWith("student@bu.edu");
+    expect(alertSpy).toHaveBeenCalledWith("Resent");
+
+    // second resend failure
+    await clickButtonByText("Didn't receive the code? Resend");
+    expect(container.textContent).toContain("No code");
+  });
+
+  it("honors mode=signup in URL search params", async () => {
+    mockSearchParams = new URLSearchParams("mode=signup");
+    await renderPage();
+    const submitBtn = container.querySelector('button[type=\"submit\"]');
+    expect(submitBtn.textContent).toBe("Create Account");
   });
 });

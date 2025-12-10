@@ -15,6 +15,8 @@ const {
   deleteEvent,
   getEventById,
   getEventAttendees,
+  getUserReservedEvents,
+  getPostedEvents,
 } = await import("../../server/controllers/eventsController.js");
 
 const createMockRes = () => {
@@ -27,6 +29,12 @@ const createMockRes = () => {
 describe("eventsController", () => {
   beforeEach(() => {
     supabaseMockModule.default.__reset();
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    jest.spyOn(console, "log").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   describe("createEvent", () => {
@@ -91,6 +99,38 @@ describe("eventsController", () => {
         location: "Student Center",
       });
     });
+
+    test("returns 500 when Supabase insert fails", async () => {
+      const originalFrom = supabaseMockModule.default.from;
+      supabaseMockModule.default.from = jest.fn(() => ({
+        insert: () => ({
+          select: () =>
+            Promise.resolve({ data: null, error: new Error("fail") }),
+        }),
+      }));
+
+      const req = {
+        profile: { id: "host-1" },
+        body: {
+          title: "Broken",
+          location: "Nowhere",
+          date: "2024-12-01",
+          time: "10:00",
+          capacity: 1,
+          food_items: [{ item: "None", qty: 1 }],
+          dietary_options: ["vegan"],
+          pickup_instructions: "",
+          description: "",
+          image_urls: ["img"],
+        },
+      };
+      const res = createMockRes();
+
+      await createEvent(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      supabaseMockModule.default.from = originalFrom;
+    });
   });
 
   describe("getAllEvents", () => {
@@ -143,6 +183,22 @@ describe("eventsController", () => {
       expect(events).toHaveLength(1);
       expect(events[0].title).toBe("Bagels");
     });
+
+    test("returns 400 on Supabase error", async () => {
+      const originalFrom = supabaseMockModule.default.from;
+      supabaseMockModule.default.from = jest.fn(() => ({
+        select: () => ({
+          order: () => Promise.resolve({ data: null, error: new Error("bad") }),
+        }),
+      }));
+      const req = { query: {} };
+      const res = createMockRes();
+
+      await getAllEvents(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      supabaseMockModule.default.from = originalFrom;
+    });
   });
 
   describe("reserveEvent", () => {
@@ -173,9 +229,8 @@ describe("eventsController", () => {
       await reserveEvent(req, res);
 
       expect(res.status).toHaveBeenCalledWith(200);
-      const attendees = supabaseMockModule.default.__getTable(
-        "event_attendees"
-      );
+      const attendees =
+        supabaseMockModule.default.__getTable("event_attendees");
       expect(attendees).toHaveLength(1);
       expect(attendees[0]).toMatchObject({
         event_id: 1,
@@ -186,9 +241,8 @@ describe("eventsController", () => {
       const events = supabaseMockModule.default.__getTable("events");
       expect(events[0].attendees_count).toBe(1);
 
-      const notifications = supabaseMockModule.default.__getTable(
-        "notifications"
-      );
+      const notifications =
+        supabaseMockModule.default.__getTable("notifications");
       expect(notifications.length).toBe(2); // host + attendee confirmations
     });
 
@@ -208,6 +262,118 @@ describe("eventsController", () => {
 
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({ error: "Event is full" });
+    });
+
+    test("prevents duplicate reservations", async () => {
+      supabaseMockModule.default.__setTable("event_attendees", [
+        { id: 99, event_id: 1, user_id: "guest-1" },
+      ]);
+      const req = {
+        profile: { id: "guest-1" },
+        params: { eventId: 1 },
+        body: {},
+      };
+      const res = createMockRes();
+
+      await reserveEvent(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        error: "You already reserved this event",
+      });
+    });
+
+    test("returns 404 when event not found", async () => {
+      supabaseMockModule.default.__setTable("events", []);
+      const req = {
+        profile: { id: "guest-1" },
+        params: { eventId: 123 },
+        body: {},
+      };
+      const res = createMockRes();
+
+      await reserveEvent(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+    });
+  });
+
+  describe("getUserReservedEvents", () => {
+    test("returns 401 when profile missing", async () => {
+      const req = { profile: null };
+      const res = createMockRes();
+
+      await getUserReservedEvents(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.json).toHaveBeenCalledWith({ reservedEventIds: [] });
+    });
+
+    test("returns reserved event ids for user", async () => {
+      supabaseMockModule.default.__setTable("event_attendees", [
+        { id: 1, event_id: 10, user_id: "me" },
+        { id: 2, event_id: 11, user_id: "other" },
+      ]);
+      const req = { profile: { id: "me" } };
+      const res = createMockRes();
+
+      await getUserReservedEvents(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        reservedEventIds: [10],
+      });
+    });
+
+    test("handles supabase errors", async () => {
+      const originalFrom = supabaseMockModule.default.from;
+      supabaseMockModule.default.from = jest.fn(() => ({
+        select: () => ({
+          eq: () => Promise.resolve({ data: null, error: new Error("boom") }),
+        }),
+      }));
+
+      const req = { profile: { id: "me" } };
+      const res = createMockRes();
+
+      await getUserReservedEvents(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      supabaseMockModule.default.from = originalFrom;
+    });
+  });
+
+  describe("getPostedEvents", () => {
+    test("returns posted events for user", async () => {
+      supabaseMockModule.default.__setTable("events", [
+        { id: 30, user_id: "owner", title: "Mine" },
+        { id: 31, user_id: "other", title: "Not Mine" },
+      ]);
+      const req = { params: { userId: "owner" } };
+      const res = createMockRes();
+
+      await getPostedEvents(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        posted: [{ id: 30, user_id: "owner", title: "Mine" }],
+      });
+    });
+
+    test("returns 500 on supabase error", async () => {
+      const originalFrom = supabaseMockModule.default.from;
+      supabaseMockModule.default.from = jest.fn(() => ({
+        select: () => ({
+          eq: () => Promise.resolve({ data: null, error: new Error("fail") }),
+        }),
+      }));
+      const req = { params: { userId: "owner" } };
+      const res = createMockRes();
+
+      await getPostedEvents(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      supabaseMockModule.default.from = originalFrom;
     });
   });
 
@@ -245,14 +411,23 @@ describe("eventsController", () => {
         supabaseMockModule.default.__getTable("events")[0].attendees_count
       ).toBe(0);
 
-      const notifications = supabaseMockModule.default.__getTable(
-        "notifications"
-      );
+      const notifications =
+        supabaseMockModule.default.__getTable("notifications");
       expect(notifications).toHaveLength(1);
       expect(notifications[0]).toMatchObject({
         user_id: "host-2",
         type: "cancellation",
       });
+    });
+
+    test("returns 404 when no reservation found", async () => {
+      supabaseMockModule.default.__setTable("event_attendees", []);
+      const req = { profile: { id: "guest-2" }, params: { eventId: 5 } };
+      const res = createMockRes();
+
+      await cancelReservation(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
     });
   });
 
@@ -298,6 +473,50 @@ describe("eventsController", () => {
       const updated = supabaseMockModule.default.__getTable("events")[0];
       expect(updated.title).toBe("New Title");
     });
+
+    test("clears attendees when moving past event to future date", async () => {
+      supabaseMockModule.default.__setTable("events", [
+        {
+          id: 8,
+          user_id: "owner-1",
+          title: "Past Event",
+          date: "2020-01-01",
+          attendees_count: 2,
+        },
+      ]);
+      supabaseMockModule.default.__setTable("event_attendees", [
+        { id: 1, event_id: 8, user_id: "guest-1" },
+      ]);
+
+      const req = {
+        profile: { id: "owner-1" },
+        params: { eventId: 8 },
+        body: { date: "2099-01-01" },
+      };
+      const res = createMockRes();
+
+      await updateEvent(req, res);
+
+      const events = supabaseMockModule.default.__getTable("events");
+      expect(events[0].attendees_count).toBe(0);
+      expect(
+        supabaseMockModule.default.__getTable("event_attendees")
+      ).toHaveLength(0);
+    });
+
+    test("returns 404 when event not found", async () => {
+      supabaseMockModule.default.__setTable("events", []);
+      const req = {
+        profile: { id: "owner-1" },
+        params: { eventId: 123 },
+        body: { title: "Nope" },
+      };
+      const res = createMockRes();
+
+      await updateEvent(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+    });
   });
 
   describe("deleteEvent", () => {
@@ -330,6 +549,98 @@ describe("eventsController", () => {
       expect(
         supabaseMockModule.default.__getTable("event_attendees")
       ).toHaveLength(0);
+    });
+
+    test("sends notifications when future event with attendees is deleted", async () => {
+      supabaseMockModule.default.__setTable("events", [
+        {
+          id: 11,
+          user_id: "owner-11",
+          title: "Future Event",
+          date: "2099-01-01",
+        },
+      ]);
+      supabaseMockModule.default.__setTable("event_attendees", [
+        { id: 51, event_id: 11, user_id: "guest-y" },
+      ]);
+      supabaseMockModule.default.__setTable("profiles", [
+        { id: "owner-11", name: "Org" },
+      ]);
+
+      const req = { profile: { id: "owner-11" }, params: { eventId: 11 } };
+      const res = createMockRes();
+
+      await deleteEvent(req, res);
+
+      const notifications =
+        supabaseMockModule.default.__getTable("notifications");
+      expect(notifications.length).toBeGreaterThan(0);
+    });
+
+    test("returns 404 when event missing", async () => {
+      supabaseMockModule.default.__setTable("events", []);
+      const req = { profile: { id: "owner-9" }, params: { eventId: 999 } };
+      const res = createMockRes();
+
+      await deleteEvent(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+    });
+
+    test("returns 500 when notifications insert fails", async () => {
+      const originalFrom = supabaseMockModule.default.from;
+      supabaseMockModule.default.from = jest.fn((table) => {
+        if (table === "events") {
+          return {
+            select: () => ({
+              eq: () =>
+                Promise.resolve({
+                  data: {
+                    id: 13,
+                    user_id: "owner-13",
+                    title: "Future",
+                    date: "2099-01-01",
+                  },
+                  error: null,
+                }),
+            }),
+            delete: () => ({ eq: () => Promise.resolve({ error: null }) }),
+          };
+        }
+        if (table === "event_attendees") {
+          return {
+            select: () => ({
+              eq: () =>
+                Promise.resolve({ data: [{ user_id: "guest" }], error: null }),
+            }),
+            delete: () => ({ eq: () => Promise.resolve({ error: null }) }),
+          };
+        }
+        if (table === "profiles") {
+          return {
+            select: () => ({
+              eq: () => ({
+                single: () =>
+                  Promise.resolve({ data: { name: "Org" }, error: null }),
+              }),
+            }),
+          };
+        }
+        if (table === "notifications") {
+          return {
+            insert: () => Promise.resolve({ error: new Error("notify fail") }),
+          };
+        }
+        return {};
+      });
+
+      const req = { profile: { id: "owner-13" }, params: { eventId: 13 } };
+      const res = createMockRes();
+
+      await deleteEvent(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      supabaseMockModule.default.from = originalFrom;
     });
   });
 
@@ -406,6 +717,52 @@ describe("eventsController", () => {
         user_id: "guest-20",
         profiles: { id: "guest-20", name: "Guest" },
       });
+    });
+
+    test("returns 404 when event missing", async () => {
+      supabaseMockModule.default.__setTable("events", []);
+      const req = { profile: { id: "host-20" }, params: { eventId: 999 } };
+      const res = createMockRes();
+
+      await getEventAttendees(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+    });
+
+    test("returns 500 when attendee query fails", async () => {
+      const originalFrom = supabaseMockModule.default.from;
+      supabaseMockModule.default.from = jest.fn((table) => {
+        if (table === "events") {
+          return {
+            select: () => ({
+              eq: () =>
+                Promise.resolve({ data: { user_id: "host-20" }, error: null }),
+            }),
+          };
+        }
+        if (table === "event_attendees") {
+          return {
+            select: () => ({
+              eq: () => ({
+                order: () =>
+                  Promise.resolve({
+                    data: null,
+                    error: new Error("join fail"),
+                  }),
+              }),
+            }),
+          };
+        }
+        return originalFrom(table);
+      });
+
+      const req = { profile: { id: "host-20" }, params: { eventId: 20 } };
+      const res = createMockRes();
+
+      await getEventAttendees(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      supabaseMockModule.default.from = originalFrom;
     });
   });
 });

@@ -111,6 +111,19 @@ describe("UserDashboard reserved events flow", () => {
       (btn) => btn.textContent === text
     );
 
+  it("shows empty state when no reserved events", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ reservedEventIds: [] }),
+    });
+
+    await renderDashboard();
+
+    expect(container.textContent).toContain("You have no upcoming reservations");
+    const browseBtn = getButtonByText("Browse available events");
+    expect(browseBtn).toBeTruthy();
+  });
+
   it("fetches reserved events and shows only upcoming ones", async () => {
     const today = new Date();
     const upcomingDate = new Date(today);
@@ -147,6 +160,31 @@ describe("UserDashboard reserved events flow", () => {
 
     expect(container.textContent).toContain(upcoming.title);
     expect(container.textContent).not.toContain(past.title);
+  });
+
+  it("opens event detail modal on view details", async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ reservedEventIds: [baseEvent.id] }),
+      })
+      .mockResolvedValueOnce({
+        json: async () => baseEvent,
+      });
+
+    await renderDashboard();
+
+    const viewBtn = getButtonByText("View Details");
+    expect(viewBtn).toBeTruthy();
+
+    await act(async () => {
+      viewBtn.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, cancelable: true })
+      );
+      await flushPromises();
+    });
+
+    expect(container.textContent).toContain("EventDetailModal");
   });
 
   it("alerts on failure to load reserved events", async () => {
@@ -190,6 +228,31 @@ describe("UserDashboard reserved events flow", () => {
     expect(container.textContent).not.toContain(baseEvent.title);
   });
 
+  it("does nothing when cancellation is rejected by user", async () => {
+    confirmSpy.mockReturnValueOnce(false);
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ reservedEventIds: [baseEvent.id] }),
+      })
+      .mockResolvedValueOnce({
+        json: async () => baseEvent,
+      });
+
+    await renderDashboard();
+
+    const cancelButton = getButtonByText("Cancel");
+    await act(async () => {
+      cancelButton.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, cancelable: true })
+      );
+      await flushPromises();
+    });
+
+    expect(alertSpy).not.toHaveBeenCalledWith("Reservation cancelled");
+    expect(container.textContent).toContain(baseEvent.title);
+  });
+
   it("alerts and keeps event when cancellation fails", async () => {
     fetchMock
       .mockResolvedValueOnce({
@@ -218,5 +281,31 @@ describe("UserDashboard reserved events flow", () => {
 
     expect(alertSpy).toHaveBeenCalledWith("Cannot cancel");
     expect(container.textContent).toContain(baseEvent.title);
+  });
+
+  it("toggles to organizer view and navigates", async () => {
+    const originalSetTimeout = global.setTimeout;
+    global.setTimeout = (fn) => {
+      fn();
+      return 0;
+    };
+
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ reservedEventIds: [] }),
+    });
+
+    await renderDashboard();
+
+    const checkbox = container.querySelector('input[type="checkbox"]');
+    await act(async () => {
+      checkbox.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, cancelable: true })
+      );
+      await flushPromises();
+    });
+
+    expect(mockNavigate).toHaveBeenCalledWith("/organizerdashboard");
+    global.setTimeout = originalSetTimeout;
   });
 });

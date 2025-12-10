@@ -27,6 +27,15 @@ beforeEach(() => {
 });
 
 describe("notifications routes", () => {
+  beforeEach(() => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    jest.spyOn(console, "log").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   test("returns notifications for a user in descending order", async () => {
     supabaseMockModule.default.__setTable("notifications", [
       {
@@ -146,5 +155,83 @@ describe("notifications routes", () => {
 
     expect(bulk.every((n) => n.is_read)).toBe(true);
     expect(other.is_read).toBe(false);
+  });
+
+  test("handles fetch error when loading notifications", async () => {
+    const originalFrom = supabaseMockModule.default.from;
+    supabaseMockModule.default.from = jest.fn(() => ({
+      select: () => ({
+        eq: () => ({
+          order: () => Promise.resolve({ data: null, error: new Error("boom") }),
+        }),
+      }),
+    }));
+
+    const app = await createApp();
+    const res = await request(app).get("/api/notifications/user/u1");
+
+    expect(res.status).toBe(500);
+    supabaseMockModule.default.from = originalFrom;
+  });
+
+  test("handles insert error when creating notification", async () => {
+    const originalFrom = supabaseMockModule.default.from;
+    supabaseMockModule.default.from = jest.fn(() => ({
+      insert: () => ({
+        select: () => Promise.resolve({ data: null, error: new Error("fail") }),
+      }),
+    }));
+
+    const app = await createApp();
+    const res = await request(app).post("/api/notifications").send({
+      user_id: "user-err",
+      type: "reservation",
+      title: "Oops",
+      message: "fail",
+      event_id: 1,
+    });
+
+    expect(res.status).toBe(500);
+    supabaseMockModule.default.from = originalFrom;
+  });
+
+  test("handles update error when marking one as read", async () => {
+    const originalFrom = supabaseMockModule.default.from;
+    supabaseMockModule.default.from = jest.fn(() => ({
+      update: () => ({
+        eq: () => ({
+          select: () =>
+            Promise.resolve({ data: null, error: new Error("fail") }),
+        }),
+      }),
+    }));
+
+    const app = await createApp();
+    const res = await request(app).patch("/api/notifications/5/read");
+
+    expect(res.status).toBe(500);
+    supabaseMockModule.default.from = originalFrom;
+  });
+
+  test("handles update error when marking all as read", async () => {
+    const originalFrom = supabaseMockModule.default.from;
+    supabaseMockModule.default.from = jest.fn(() => ({
+      update: () => ({
+        eq: () => ({
+          eq: () => ({
+            select: () =>
+              Promise.resolve({ data: null, error: new Error("fail") }),
+          }),
+        }),
+      }),
+    }));
+
+    const app = await createApp();
+    const res = await request(app).patch(
+      "/api/notifications/user/user-err/read-all"
+    );
+
+    expect(res.status).toBe(500);
+    supabaseMockModule.default.from = originalFrom;
   });
 });
