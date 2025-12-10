@@ -57,10 +57,13 @@
   outline: none;
   color: #333;
   font-family: "Inter", sans-serif;
+  width: 0;
+  min-width: 0;
+  text-overflow: ellipsis;
 }
 
 .search-input::placeholder {
-  color: #cc0000;
+  color: white;
 }
 
 .header-right {
