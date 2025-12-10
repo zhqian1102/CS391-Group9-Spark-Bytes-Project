@@ -37,7 +37,7 @@ const UserProfile = () => {
       }
     };
     loadProfile();
-  }, []);
+  }, [user, refreshUser]);
 
   // Reset image preview when user changes (like EventDetailModal does)
   useEffect(() => {
@@ -163,7 +163,7 @@ const UserProfile = () => {
 
       console.log("📤 Uploading image to:", filePath);
 
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from("profile-pictures")
         .upload(filePath, file, {
           cacheControl: "3600",
