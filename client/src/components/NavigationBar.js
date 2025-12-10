@@ -17,7 +17,7 @@ const NavigationBar = () => {
     setSearchQuery(currentSearch);
   }, [location.search]);
 
-  // ✅ Immediately update URL when on /events and search changes
+  // Immediately update URL when on /events and search changes
   useEffect(() => {
     // only run this effect if you're actually on /events
     if (!location.pathname.startsWith("/events")) return;
@@ -32,18 +32,37 @@ const NavigationBar = () => {
   }, [searchQuery, navigate, location.pathname]);
 
   // Preload profile picture into browser cache to prevent flicker
-useEffect(() => {
-  if (user?.profilePicture) {
-    const img = new Image();
-    img.src = user.profilePicture;
-  }
-}, [user?.profilePicture]);
+  useEffect(() => {
+    if (user?.profilePicture) {
+      const img = new Image();
+      img.src = user.profilePicture;
+    }
+  }, [user?.profilePicture]);
 
+  // Click anywhere to close an open profile dropdown menu
+  useEffect(() => {
+    if (!showProfile) return;
+
+    const handleClickOutside = (event) => {
+      const dropdownContainer = document.querySelector(
+        ".profile-dropdown-container"
+      );
+      if (dropdownContainer && !dropdownContainer.contains(event.target)) {
+        setShowProfile(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showProfile]);
 
   // Get user initials for placeholder
   const getInitials = () => {
-    if (!user?.name) return '?';
-    const names = user.name.split(' ');
+    if (!user?.name) return "?";
+    const names = user.name.split(" ");
     if (names.length >= 2) {
       return (names[0][0] + names[names.length - 1][0]).toUpperCase();
     }
@@ -137,15 +156,13 @@ useEffect(() => {
             title={user?.name || "Profile"}
           >
             {user?.profilePicture ? (
-              <img 
-                src={user.profilePicture} 
-                alt="Profile" 
+              <img
+                src={user.profilePicture}
+                alt="Profile"
                 className="navbar-profile-pic"
               />
             ) : (
-              <div className="navbar-profile-placeholder">
-                {getInitials()}
-              </div>
+              <div className="navbar-profile-placeholder">{getInitials()}</div>
             )}
           </button>
 
