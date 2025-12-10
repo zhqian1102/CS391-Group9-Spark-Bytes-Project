@@ -12,7 +12,7 @@ if (
   supabaseUrl !== "your-supabase-url-here"
 ) {
   supabase = createClient(supabaseUrl, supabaseAnonKey);
-  console.log("✅ Supabase client initialized");
+  // console.log("✅ Supabase client initialized");
 } else {
   console.log("⚠️  Supabase credentials not configured");
 }

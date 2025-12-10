@@ -244,6 +244,52 @@ describe("UserProfile", () => {
     expect(previewImg.src).toContain("data:image/png;base64,preview");
   });
 
+  it("falls back to initials when image load fails", async () => {
+    useAuth.mockReturnValue({
+      user: { ...mockUser, profilePicture: "broken.png" },
+      updateProfile: updateProfileMock,
+      logout: logoutMock,
+      refreshUser: refreshUserMock,
+    });
+
+    await renderPage();
+
+    const img = container.querySelector("img.profile-picture");
+    const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    await act(async () => {
+      img.dispatchEvent(new Event("error", { bubbles: true }));
+      await flushPromises();
+    });
+
+    const placeholder = container.querySelector(".profile-picture-placeholder");
+    expect(placeholder?.textContent).toBe("TU");
+    consoleSpy.mockRestore();
+  });
+
+  it("handles delete account confirmation", async () => {
+    const confirmSpy = jest.spyOn(window, "confirm").mockReturnValue(true);
+
+    await renderPage();
+    await clickButton("Delete Account", ".danger-btn");
+
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(alertSpy).toHaveBeenCalledWith(
+      "Account deletion feature will be implemented soon."
+    );
+    confirmSpy.mockRestore();
+  });
+
+  it("does nothing when delete account is canceled", async () => {
+    const confirmSpy = jest.spyOn(window, "confirm").mockReturnValue(false);
+
+    await renderPage();
+    await clickButton("Delete Account", ".danger-btn");
+
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(alertSpy).not.toHaveBeenCalled();
+    confirmSpy.mockRestore();
+  });
+
   it("logs out and navigates to login", async () => {
     await renderPage();
     await clickButton("Logout", ".logout-btn");
