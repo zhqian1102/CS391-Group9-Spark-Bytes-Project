@@ -11,6 +11,7 @@ const Login = () => {
   const [showVerification, setShowVerification] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
   const [pendingEmail, setPendingEmail] = useState("");
+  const [infoMessage, setInfoMessage] = useState("");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -37,6 +38,7 @@ const Login = () => {
       [e.target.name]: e.target.value,
     });
     setError("");
+    setInfoMessage("");
   };
 
   const validateEmail = (email) => {
@@ -47,6 +49,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setInfoMessage("");
 
     // Validate BU email
     if (!validateEmail(formData.email)) {
@@ -87,6 +90,9 @@ const Login = () => {
           // Show verification code input
           setPendingEmail(formData.email);
           setShowVerification(true);
+          setInfoMessage(
+            `Verification code sent to ${formData.email}. Please verify your email to continue.`
+          );
           alert(result.message);
         } else if (result.success) {
           // Direct success (Supabase flow)
@@ -95,6 +101,7 @@ const Login = () => {
           setShowVerification(false); //for link to login after signup
           setVerificationCode("");
           setPendingEmail("");
+          setInfoMessage("Registration successful! Please log in to continue.");
           setFormData({
             email: "",
             password: "",
@@ -118,6 +125,7 @@ const Login = () => {
   const handleVerification = async (e) => {
     e.preventDefault();
     setError("");
+    setInfoMessage("");
 
     if (verificationCode.length !== 6) {
       setError("Please enter a valid 6-digit code");
@@ -130,8 +138,23 @@ const Login = () => {
       const result = await verifyEmail(pendingEmail, verificationCode);
 
       if (result.success) {
-        alert(`${result.message} Welcome to Spark Bytes, ${result.user.name}!`);
-        navigate("/events");
+        const message =
+          result.message ||
+          "Email verified successfully! Please log in to continue.";
+        setInfoMessage(`${message} You can now log in with your credentials.`);
+        alert(message);
+        setShowVerification(false);
+        setIsLogin(true);
+        setVerificationCode("");
+        setFormData({
+          email: pendingEmail,
+          password: "",
+          confirmPassword: "",
+          name: "",
+          userType: "student",
+        });
+        setPendingEmail("");
+        navigate("/login?mode=login");
       } else {
         setError(result.error);
       }
@@ -152,6 +175,7 @@ const Login = () => {
 
       if (result.success) {
         alert(result.message);
+        setInfoMessage(result.message);
       } else {
         setError(result.error);
       }
@@ -168,6 +192,7 @@ const Login = () => {
     setShowVerification(false);
     setVerificationCode("");
     setPendingEmail("");
+    setInfoMessage("");
     setFormData({
       email: "",
       password: "",
@@ -246,21 +271,22 @@ const Login = () => {
                   required
                   maxLength="6"
                   style={{
-                    fontSize: "24px",
-                    letterSpacing: "10px",
-                    textAlign: "center",
-                    fontWeight: "bold",
-                  }}
-                />
-              </div>
-              {error && <div className="error-message">{error}</div>}
-              <button type="submit" className="submit-btn" disabled={loading}>
-                {loading ? "Verifying..." : "Verify Email"}
-              </button>
-              <div className="resend-code">
-                <button
-                  type="button"
-                  onClick={handleResendCode}
+                  fontSize: "24px",
+                  letterSpacing: "10px",
+                  textAlign: "center",
+                  fontWeight: "bold",
+                }}
+              />
+            </div>
+            {infoMessage && <div className="info-message">{infoMessage}</div>}
+            {error && <div className="error-message">{error}</div>}
+            <button type="submit" className="submit-btn" disabled={loading}>
+              {loading ? "Verifying..." : "Verify Email"}
+            </button>
+            <div className="resend-code">
+              <button
+                type="button"
+                onClick={handleResendCode}
                   disabled={loading}
                   style={{
                     background: "none",
@@ -346,6 +372,9 @@ const Login = () => {
                     minLength="6"
                   />
                 </div>
+              )}
+              {infoMessage && (
+                <div className="info-message">{infoMessage}</div>
               )}
               {error && <div className="error-message">{error}</div>}
               <button type="submit" className="submit-btn" disabled={loading}>
