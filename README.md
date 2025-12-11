@@ -236,10 +236,10 @@ MIT
 
 CS391 Group 9: 
 
-Ilias Zaher
-Zhihui Qian
-Merem Gabriel
-Shu (Ivy) Shi
+Ilias Zaher,
+Zhihui Qian,
+Merem Gabriel,
+Shu (Ivy) Shi,
 Liting Zheng
 
 # CS391-Group9-Spark-Bytes-Project
