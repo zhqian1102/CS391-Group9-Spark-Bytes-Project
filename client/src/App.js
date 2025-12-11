@@ -13,6 +13,7 @@ import UserProfile from "./pages/UserProfile/UserProfile";
 import EditEventPage from "./pages/EditEvent/EditEvent";
 import ViewAttendeesPage from "./pages/ViewAttendees/ViewAttendees";
 import "./App.css";
+import PrivateRoute from "./components/PrivateRoute";
 
 function App() {
   return (
@@ -22,18 +23,71 @@ function App() {
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/events" element={<EventsPage />} />
-            <Route path="/post" element={<PostEvent />} />
-            <Route path="/userdashboard" element={<UserDashboard />} />
+            <Route
+              path="/events"
+              element={
+                <PrivateRoute>
+                  <EventsPage />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/post"
+              element={
+                <PrivateRoute>
+                  <PostEvent />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/userdashboard"
+              element={
+                <PrivateRoute>
+                  <UserDashboard />
+                </PrivateRoute>
+              }
+            />
             <Route
               path="/organizerdashboard"
-              element={<OrganizerDashboard />}
+              element={
+                <PrivateRoute>
+                  <OrganizerDashboard />
+                </PrivateRoute>
+              }
             />
-            <Route path="/notifications" element={<NotificationPage />} />
+            <Route
+              path="/notifications"
+              element={
+                <PrivateRoute>
+                  <NotificationPage />
+                </PrivateRoute>
+              }
+            />
             <Route path="/about" element={<AboutPage />} />
-            <Route path="/profile" element={<UserProfile />} />
-            <Route path="/editevent/:id" element={<EditEventPage />} />
-            <Route path="/viewattendees/:id" element={<ViewAttendeesPage />} />
+            <Route
+              path="/profile"
+              element={
+                <PrivateRoute>
+                  <UserProfile />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/editevent/:id"
+              element={
+                <PrivateRoute>
+                  <EditEventPage />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/viewattendees/:id"
+              element={
+                <PrivateRoute>
+                  <ViewAttendeesPage />
+                </PrivateRoute>
+              }
+            />
           </Routes>
         </div>
       </Router>

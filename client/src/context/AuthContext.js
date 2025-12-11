@@ -43,21 +43,29 @@ export const AuthProvider = ({ children }) => {
           .eq('id', session.user.id)
           .single();
 
-        const userData = profile ? {
-          id: session.user.id,
-          email: session.user.email,
-          name: profile.name,
-          userType: profile.user_type || "student",
-          profilePicture: profile.profile_picture,
-          dietaryPreferences: profile.dietary_preferences || [],
-        } : {
-          id: session.user.id,
-          email: session.user.email,
-          name: session.user.user_metadata?.name || session.user.email.split("@")[0],
-          userType: session.user.user_metadata?.userType || "student",
-          profilePicture: null,
-          dietaryPreferences: [],
-        };
+        const fallbackName =
+          session.user.user_metadata?.name ||
+          session.user.email.split("@")[0];
+        const fallbackUserType =
+          session.user.user_metadata?.userType || "student";
+
+        const userData = profile
+          ? {
+              id: session.user.id,
+              email: session.user.email,
+              name: profile.name || fallbackName,
+              userType: profile.user_type || fallbackUserType,
+              profilePicture: profile.profile_picture || null,
+              dietaryPreferences: profile.dietary_preferences || [],
+            }
+          : {
+              id: session.user.id,
+              email: session.user.email,
+              name: fallbackName,
+              userType: fallbackUserType,
+              profilePicture: null,
+              dietaryPreferences: [],
+            };
         
         setUser(userData);
         localStorage.setItem("user", JSON.stringify(userData));
@@ -169,21 +177,11 @@ export const AuthProvider = ({ children }) => {
         return { success: false, error: data.message || "Verification failed" };
       }
 
-      // Set user data after successful verification
-      const userData = {
-        id: data.user.id,
-        email: data.user.email,
-        name: data.user.name,
-        userType: data.user.userType,
-      };
-
-      setUser(userData);
-      localStorage.setItem("user", JSON.stringify(userData));
-
+      // Do not auto-login; let the user sign in after verification
       return {
         success: true,
-        user: userData,
-        message: "Email verified successfully!",
+        message: data.message || "Email verified successfully!",
+        user: data.user,
       };
     } catch (error) {
       return {
@@ -308,20 +306,29 @@ export const AuthProvider = ({ children }) => {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
           // Load profile from database
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
 
           if (profile) {
+            const fallbackName =
+              session.user.user_metadata?.name ||
+              user?.name ||
+              session.user.email.split("@")[0];
+            const fallbackUserType =
+              session.user.user_metadata?.userType ||
+              user?.userType ||
+              "student";
+
             const userData = {
               id: session.user.id,
               email: session.user.email,
-              name: profile.name,
-              userType: profile.user_type,
-              profilePicture: profile.profile_picture,
-              dietaryPreferences: profile.dietary_preferences || [],
+              name: profile.name || fallbackName,
+              userType: profile.user_type || fallbackUserType,
+              profilePicture: profile.profile_picture || user?.profilePicture || null,
+              dietaryPreferences: profile.dietary_preferences || user?.dietaryPreferences || [],
             };
             setUser(userData);
             localStorage.setItem("user", JSON.stringify(userData));
@@ -352,6 +359,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     updateProfile,
     refreshUser,
+    loading,
     isAuthenticated: !!user,
   };
 
