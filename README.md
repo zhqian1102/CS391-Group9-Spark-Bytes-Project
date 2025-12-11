@@ -6,14 +6,14 @@ A platform for Boston University students and faculty members to post events tha
 
 ## 📚 Documentation & Setup Guides
 
-| Guide                                                                            | Description                                                   |
-| -------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| 📖 [**Backend Setup Guide**](./BACKEND-SETUP-GUIDE.md)                           | **START HERE!** Complete guide to get the backend running     |
-| 📧 [**Email Verification Setup**](./EMAIL-VERIFICATION-SETUP.md)                 | Configure email verification with Gmail for user registration |
-| 🗄️ [**Supabase Integration**](./SUPABASE-INTEGRATION-GUIDE.md)                   | Set up cloud database and authentication                      |
-| 🔧 [**Supabase Setup (Quick)**](./SUPABASE-SETUP.md)                             | Quick start guide for Supabase configuration                  |
-| 💾 [**SQL Schema**](./SUPABASE-USERS-TABLE-SETUP.sql)                            | Database table setup script                                   |
-| 🧪 [**Testing (Backend + Frontend)**](<./Testing%20(Backend%20+%20Frontend).md>) | How to run and interpret backend and frontend test suites     |
+| Guide                                                            | Description                                                   |
+| ---------------------------------------------------------------- | ------------------------------------------------------------- |
+| 📖 [**Backend Setup Guide**](./BACKEND-SETUP-GUIDE.md)           | **START HERE!** Complete guide to get the backend running     |
+| 📧 [**Email Verification Setup**](./EMAIL-VERIFICATION-SETUP.md) | Configure email verification with Gmail for user registration |
+| 🗄️ [**Supabase Integration**](./SUPABASE-INTEGRATION-GUIDE.md)   | Set up cloud database and authentication                      |
+| 🔧 [**Supabase Setup (Quick)**](./SUPABASE-SETUP.md)             | Quick start guide for Supabase configuration                  |
+| 💾 [**SQL Schema**](./SUPABASE-USERS-TABLE-SETUP.sql)            | Database table setup script                                   |
+| 🧪 [**Testing_Backend_Frontend**](./Testing_Backend_Frontend.md) | How to run and interpret backend and frontend test suites     |
 
 **👉 First time setup?** Follow these guides in order:
 
@@ -106,14 +106,16 @@ The application will be available at:
 **Note**: The app works out of the box with localStorage! For persistent data, follow the Supabase setup guide below.
 
 ### Testing the Application
+
 This project includes both backend and frontend automated test suites using a multi-project Jest configuration. You can run all tests with a single command:
 
 ```bash
 npm test
 ```
-If you want to run either suite individually or explore coverage options,(./Testing(Backend+Frontend).md).
 
-### Setting Up Supabase (Optional but Recommended)
+If you want to run either suite individually or explore coverage options [**Testing_Backend_Frontend**](./Testing_Backend_Frontend.md)
+
+## Setting Up Supabase (Optional but Recommended)
 
 For persistent user authentication, follow the detailed guide:
 📖 **[SUPABASE-SETUP.md](./SUPABASE-SETUP.md)**
@@ -184,7 +186,9 @@ CS391-Group9-Spark-Bytes-Project/
 │   ├── public/             # Static assets
 │   └── src/
 │       ├── components/     # Navbar, modals, shared UI
+│       │   └── EventDetailModal.test.js   # Example frontend test
 │       ├── pages/          # Login, Dashboard, Events, etc.
+│       │   └── **/*.test.js # Page-level frontend tests (e.g., Login, Events, Profile)
 │       ├── context/        # Auth context + API calls
 │       └── config/         # Supabase client, location map
 ├── server/                 # Express backend
@@ -192,6 +196,13 @@ CS391-Group9-Spark-Bytes-Project/
 │   ├── controllers/        # Request handlers
 │   ├── middleware/         # JWT/auth middleware
 │   └── config/             # Supabase server client
+├── tests/                  # Automated Jest test suites
+│   └── backend/            # Backend integration/unit tests
+│       ├── __mocks__/      # Supabase mock for isolated tests
+│       ├── auth.test.js    # Email/password login + signup flows
+│       ├── events.test.js  # Event CRUD + filtering logic
+│       ├── notifications.test.js # Notification handling
+│       └── userProfile.test.js   # Profile retrieval + updates
 ├── *.md                    # Setup and integration guides
 ├── package*.json           # Scripts and dependencies
 └── README.md               # Project overview (this file)
@@ -242,7 +253,7 @@ MIT
 
 ## Contributors
 
-CS391 Group 9: 
+CS391 Group 9:
 
 Ilias Zaher,
 Zhihui Qian,
