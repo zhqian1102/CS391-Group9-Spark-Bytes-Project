@@ -55,11 +55,9 @@ cd CS391-Group9-Spark-Bytes-Project
 
 2. Environment Setup (.env and .env.local)
 
-   a. From Root `.env` (backend)
+   a. Backend `/.env` (from root)
 
-   Location: `/.env`
-
-   ```env
+   ```
    # Server
    PORT=5001
    JWT_SECRET=...
@@ -76,7 +74,7 @@ cd CS391-Group9-Spark-Bytes-Project
    SUPABASE_SERVICE_ROLE_KEY=your-service-role-key  # keep this private
    ```
 
-   b. Frontend `client/.env.local`
+   b. Frontend `client/.env.local`(from client)
 
    ```
    REACT_APP_API_URL=http://localhost:5001
