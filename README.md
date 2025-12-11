@@ -108,6 +108,7 @@ The application will be available at:
 This project includes both backend and frontend automated test suites using a multi-project Jest configuration. You can run all tests with a single command:
 
 ```bash
+npm install && npm --prefix client install
 npm test
 ```
 
