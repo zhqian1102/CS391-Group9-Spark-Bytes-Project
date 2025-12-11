@@ -186,9 +186,10 @@ CS391-Group9-Spark-Bytes-Project/
 │   ├── public/             # Static assets
 │   └── src/
 │       ├── components/     # Navbar, modals, shared UI
-│       │   └── EventDetailModal.test.js   # Example frontend test
 │       ├── pages/          # Login, Dashboard, Events, etc.
-│       │   └── **/*.test.js # Page-level frontend tests (e.g., Login, Events, Profile)
+│       │   └── **.js       # Page-level frontend components
+│       │   └── **.css      # Custom CSS styling files
+│       │   └── **.test.js  # Page-level frontend tests 
 │       ├── context/        # Auth context + API calls
 │       └── config/         # Supabase client, location map
 ├── server/                 # Express backend
@@ -199,10 +200,7 @@ CS391-Group9-Spark-Bytes-Project/
 ├── tests/                  # Automated Jest test suites
 │   └── backend/            # Backend integration/unit tests
 │       ├── __mocks__/      # Supabase mock for isolated tests
-│       ├── auth.test.js    # Email/password login + signup flows
-│       ├── events.test.js  # Event CRUD + filtering logic
-│       ├── notifications.test.js # Notification handling
-│       └── userProfile.test.js   # Profile retrieval + updates
+│       └── **.test.js      # backend test file
 ├── *.md                    # Setup and integration guides
 ├── package*.json           # Scripts and dependencies
 └── README.md               # Project overview (this file)
