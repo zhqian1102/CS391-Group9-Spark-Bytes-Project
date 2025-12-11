@@ -11,10 +11,15 @@ This repository uses a Jest multi-project config:
 From the repository root :
 
 ```bash
+# Install root-level dependencies
 npm install
 
-# If any test tooling is missing (belt-and-suspenders):
-npm install -D jest supertest @testing-library/react @testing-library/jest-dom
+# Install frontend dependencies
+npm --prefix client install
+
+# (Optional) Install missing test tooling for BOTH projects
+npm install -D jest supertest @testing-library/react @testing-library/jest-dom jest-environment-jsdom
+
 ```
 
 ## Running tests
