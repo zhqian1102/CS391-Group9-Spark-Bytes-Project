@@ -53,7 +53,38 @@ git clone <repo-url>
 cd CS391-Group9-Spark-Bytes-Project
 ```
 
-2. Install dependencies for both server and client:
+2. Environment Setup (.env and .env.local)
+
+   a. From Root `.env` (backend)
+
+   Location: `/.env`
+
+   ```env
+   # Server
+   PORT=5001
+   JWT_SECRET=...
+
+   # Email (required for verification codes)
+   EMAIL_USER=your_email@gmail.com
+   EMAIL_PASSWORD=your_app_password  # use a Gmail App Password
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=587
+
+   # Supabase (optional for persistent data)
+   SUPABASE_URL=https://your-project.supabase.co
+   SUPABASE_ANON_KEY=your-anon-key
+   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key  # keep this private
+   ```
+
+   b. Frontend `client/.env.local`
+
+   ```
+   REACT_APP_API_URL=http://localhost:5001
+   REACT_APP_SUPABASE_URL=https://your-project.supabase.co
+   REACT_APP_SUPABASE_ANON_KEY=your-anon-key
+   ```
+
+3. Install dependencies for both server and client:
 
 ```bash
 npm run install-all
