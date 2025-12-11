@@ -105,6 +105,14 @@ The application will be available at:
 
 **Note**: The app works out of the box with localStorage! For persistent data, follow the Supabase setup guide below.
 
+### Testing the Application
+This project includes both backend and frontend automated test suites using a multi-project Jest configuration. You can run all tests with a single command:
+
+```bash
+npm test
+```
+If you want to run either suite individually or explore coverage options,(./Testing(Backend+Frontend).md).
+
 ### Setting Up Supabase (Optional but Recommended)
 
 For persistent user authentication, follow the detailed guide:
