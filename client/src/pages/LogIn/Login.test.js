@@ -278,10 +278,9 @@ describe("Login page", () => {
     await submitForm();
 
     expect(authMocks.verifyEmail).toHaveBeenCalledWith("student@bu.edu", "123456");
-    expect(alertSpy).toHaveBeenCalledWith(
-      "Verified Welcome to Spark Bytes, Tester!"
-    );
-    expect(mockNavigate).toHaveBeenCalledWith("/events");
+    expect(alertSpy).toHaveBeenNthCalledWith(1, "Code sent");
+    expect(alertSpy).toHaveBeenNthCalledWith(2, "Verified");
+    expect(mockNavigate).toHaveBeenCalledWith("/login?mode=login");
   });
 
   it("resends verification code and handles error", async () => {
